@@ -1,0 +1,22 @@
+{
+  "name": "qk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": "git+https://github.com/wlwywlqk/qk.git",
+  "author": "wlwywlqk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wlwywlqk/qk/issues"
+  },
+  "homepage": "https://github.com/wlwywlqk/qk#readme",
+  "devDependencies": {
+    "@types/jest": "^26.0.23",
+    "jest": "^27.0.6",
+    "ts-jest": "^27.0.3",
+    "typescript": "^4.3.5"
+  }
+}
