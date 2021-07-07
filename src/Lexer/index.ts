@@ -1,5 +1,6 @@
 import { Token, Num, Str } from './token';
 import { Tag } from './tag';
+import { LexerError } from './error';
 
 export class Lexer {
     public line = 1;
@@ -8,6 +9,9 @@ export class Lexer {
     private start = 0;
     private current = 0;
 
+    public error: LexerError | null = null
+
+    public static Keywords = new Map();
 
 
     constructor(private readonly source = '') { }
@@ -17,12 +21,18 @@ export class Lexer {
     }
 
     private advance(): string {
+        this.col++;
         return this.source.charAt(this.current++);
+    }
+    private back(): string {
+        this.col--;
+        return this.source.charAt(--this.current);
     }
 
     private match(expected: string): boolean {
         if (this.end) return false;
         if (this.source.charAt(this.current) === expected) {
+            this.col++;
             this.current++;
             return true;
         }
@@ -35,6 +45,18 @@ export class Lexer {
     }
 
     public scan(): Token | null {
+        if (this.error) {
+            throw this.error;
+        }
+        try {
+            return this.scanImpl();
+        } catch (e) {
+            this.error = e;
+            throw e;   
+        }
+    }
+
+    private scanImpl(): Token | null {
 
         while (!this.end) {
             const c = this.advance();
@@ -42,7 +64,6 @@ export class Lexer {
             switch (c) {
                 case ' ':
                 case '\t':
-                    this.col++;
                 case '\r':
                     break;
                 case '\n':
@@ -51,47 +72,33 @@ export class Lexer {
                     break;
                 case '&':
                     if (this.match('&')) {
-                        this.col += 2;
                         return new Token(Tag.AND_AND, '&&');
                     }
-                    this.col++;
                     return new Token(Tag.AND, '&');
                 case '|':
                     if (this.match('|')) {
-                        this.col += 2;
                         return new Token(Tag.OR_OR, '||');
                     }
-                    this.col++;
                     return new Token(Tag.OR, '|');
                 case '(':
-                    this.col++;
                     return new Token(Tag.LEFT_PAREN, '(');
                 case ')':
-                    this.col++;
                     return new Token(Tag.RIGHT_PAREN, ')');
                 case '{':
-                    this.col++;
                     return new Token(Tag.LEFT_BRACE, '{');
                 case '}':
-                    this.col++;
                     return new Token(Tag.RIGHT_BRACE, '}');
                 case ',':
-                    this.col++;
                     return new Token(Tag.COMMA, ',');
                 case ';':
-                    this.col++;
                     return new Token(Tag.SEMICOLON, ';');
                 case '.': 
-                    this.col++;
                     return new Token(Tag.DOT, '.');
                 case '+': 
-                    this.col++;
                     return new Token(Tag.PLUS, '+');
                 case '-':
-                    this.col++;
                     return new Token(Tag.MINUS, '-');
                 case '*':
-                    this.col++;
                     return new Token(Tag.STAR, '*');
                 
                 case '/':
@@ -101,44 +108,72 @@ export class Lexer {
                         }
                         break; 
                     }
-                    this.col++;
                     return new Token(Tag.SLASH, '/');
 
                 case '!':
                     if (this.match('=')) {
-                        this.col += 2;
                         return new Token(Tag.BANG_EQUAL, '!=');
                     }
-                    this.col++;
                     return new Token(Tag.BANG, '!');
                 case '=':
                     if (this.match('=')) {
-                        this.col += 2;
                         return new Token(Tag.EQUAL_EQUAL, '==');
                     }
-                    this.col++;
                     return new Token(Tag.EQUAL, '=');
                 case '>':
                     if (this.match('=')) {
-                        this.col += 2;
                         return new Token(Tag.GREATER_EQUAL, '>=');
                     }
-                    this.col++;
                     return new Token(Tag.GREATER, '>');
                 case '<':
                     if (this.match('=')) {
-                        this.col += 2;
                         return new Token(Tag.LESS_EQUAL, '<=');
                     }
-                    this.col++;
                     return new Token(Tag.LESS, '<');
-                
 
+                default:
+                    if (this.isNumber(c)) {
+                        this.start = this.current - 1;
 
+                        let nc = this.advance();
+                        while(this.isNumber(nc)) {
+                            nc = this.advance();
+                        }
 
+                        if (nc === '.') {
+
+                            nc = this.advance();
+                            let d = 10;
+
+                            while(this.isNumber(nc)) {
+                                nc = this.advance();
+                                d *= 10;
+                            }
+
+                            if (nc === '.') {
+                                throw new LexerError('Unexpected number.', this.line, this.col);
+                            }
+
+                        }
+                        if (this.isLetter(nc)) {
+                            throw new LexerError('Unexpected number.', this.line, this.col);
+                        }
+                        this.back();
+                        const lexeme = this.source.slice(this.start, this.current)
+                        return new Num(lexeme, Number(lexeme));
+                    } else {
+                    }
             }
         }
         return null
+    }
+
+    private isNumber(char: string): boolean {
+        return char >= '0' && char <= '9';
+    }
+
+    private isLetter(char: string): boolean {
+        return char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z';
     }
 
 }
