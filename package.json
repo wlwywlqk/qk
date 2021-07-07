@@ -2,7 +2,6 @@
   "name": "qk",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "test": "jest"
   },
@@ -13,6 +12,10 @@
     "url": "https://github.com/wlwywlqk/qk/issues"
   },
   "homepage": "https://github.com/wlwywlqk/qk#readme",
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+  },
   "devDependencies": {
     "@types/jest": "^26.0.23",
     "jest": "^27.0.6",
