@@ -14,7 +14,22 @@ export class Lexer {
     public static Keywords = new Map();
 
 
-    constructor(private readonly source = '') { }
+    constructor(private readonly source = '') {
+        Lexer.Keywords.set('var', new Token(Tag.VAR, 'var'));
+        Lexer.Keywords.set('fun', new Token(Tag.FUN, 'fun'));
+        Lexer.Keywords.set('if', new Token(Tag.IF, 'if'));
+        Lexer.Keywords.set('else', new Token(Tag.ELSE, 'else'));
+        Lexer.Keywords.set('do', new Token(Tag.DO, 'do'));
+        Lexer.Keywords.set('while', new Token(Tag.WHILE, 'while'));
+        Lexer.Keywords.set('for', new Token(Tag.FOR, 'for'));
+        Lexer.Keywords.set('class', new Token(Tag.CLASS, 'class'));
+        Lexer.Keywords.set('extends', new Token(Tag.EXTENDS, 'extends'));
+        Lexer.Keywords.set('true', new Token(Tag.TRUE, 'true'));
+        Lexer.Keywords.set('false', new Token(Tag.FALSE, 'false'));
+        Lexer.Keywords.set('this', new Token(Tag.THIS, 'this'));
+        Lexer.Keywords.set('return', new Token(Tag.RETURN, 'return'));
+        Lexer.Keywords.set('null', new Token(Tag.NULL, 'null'));
+    }
 
     public get end() {
         return this.current >= this.source.length;
@@ -23,10 +38,6 @@ export class Lexer {
     private advance(): string {
         this.col++;
         return this.source.charAt(this.current++);
-    }
-    private back(): string {
-        this.col--;
-        return this.source.charAt(--this.current);
     }
 
     private match(expected: string): boolean {
@@ -100,13 +111,22 @@ export class Lexer {
                     return new Token(Tag.MINUS, '-');
                 case '*':
                     return new Token(Tag.STAR, '*');
-                
+                case '"':
+                    this.start = this.current - 1;
+                    while (this.peek() !== '"' && !this.end) {
+                        this.advance();
+                    }
+                    if (this.match('"')) {
+                        const lexeme = this.source.slice(this.start, this.current);
+                        return new Str(lexeme, lexeme.slice(1, -1));
+                    }
+                    throw new LexerError('Invalid token', this.line, this.col);
                 case '/':
                     if (this.match('/')) {
                         while (this.peek() !== '\n' && !this.end) {
                             this.advance();
                         }
-                        break; 
+                        break;
                     }
                     return new Token(Tag.SLASH, '/');
 
@@ -135,33 +155,43 @@ export class Lexer {
                     if (this.isNumber(c)) {
                         this.start = this.current - 1;
 
-                        let nc = this.advance();
-                        while(this.isNumber(nc)) {
-                            nc = this.advance();
+                        while(this.isNumber(this.peek())) {
+                            this.advance();
                         }
 
-                        if (nc === '.') {
-
-                            nc = this.advance();
-                            let d = 10;
-
-                            while(this.isNumber(nc)) {
-                                nc = this.advance();
-                                d *= 10;
+                        if (this.peek() === '.') {
+                            let hasDecimals = false;
+                            this.advance();
+                            while(this.isNumber(this.peek())) {
+                                hasDecimals = true
+                                this.advance();
                             }
 
-                            if (nc === '.') {
+                            if (!hasDecimals) {
+                                throw new LexerError('Unexpected number.', this.line, this.col);
+                            }
+
+                            if (this.peek() === '.') {
                                 throw new LexerError('Unexpected number.', this.line, this.col);
                             }
 
                         }
-                        if (this.isLetter(nc)) {
+                        if (this.isLetter(this.peek())) {
                             throw new LexerError('Unexpected number.', this.line, this.col);
                         }
-                        this.back();
                         const lexeme = this.source.slice(this.start, this.current)
                         return new Num(lexeme, Number(lexeme));
-                    } else {
+                    } else if (this.isLetter(c)) {
+                        this.start = this.current - 1;
+                        while (this.isLetter(this.peek()) || this.isNumber(this.peek())) {
+                            this.advance();
+                        }
+                        const lexeme = this.source.slice(this.start, this.current);
+                        if (Lexer.Keywords.has(lexeme)) {
+                            return Lexer.Keywords.get(lexeme);
+                        } else {
+                            return new Token(Tag.ID, lexeme);
+                        }
                     }
             }
         }

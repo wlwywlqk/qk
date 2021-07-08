@@ -28,16 +28,25 @@ export enum Tag {
     LESS_EQUAL,
     
 
+    VAR,
+    FUN,
+    RETURN,
+    THIS,
+    FALSE,
+    TRUE,
     IF,
     ELSE,
-    ELSEIF,
     DO,
     WHILE,
+    FOR,
+    CLASS,
+    EXTENDS,
+    NULL,
+  
 
     ID,
     STR,
     NUM,
-    FALSE,
-    TRUE,
+ 
 
 }
