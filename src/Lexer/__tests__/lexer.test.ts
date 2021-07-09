@@ -78,9 +78,9 @@ describe('lexer', () => {
     });
 
     test('string', () => {
-        const lexer1 = new Lexer('"test string." 123 "123123"');
+        const lexer1 = new Lexer('"test string." "123""123123"');
         expect(lexer1.scan()).toEqual(new Str('"test string."', 'test string.'));
-        expect(lexer1.scan()).toEqual(new Num('123', 123));
+        expect(lexer1.scan()).toEqual(new Str('"123"', "123"));
         expect(lexer1.scan()).toEqual(new Str('"123123"', '123123'));
     });
 
