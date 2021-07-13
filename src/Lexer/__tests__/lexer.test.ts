@@ -78,11 +78,19 @@ describe('lexer', () => {
     });
 
     test('string', () => {
-        const lexer1 = new Lexer('"test string." "123""123123"');
-        expect(lexer1.scan()).toEqual(new Str('"test string."', 'test string.'));
-        expect(lexer1.scan()).toEqual(new Str('"123"', "123"));
-        expect(lexer1.scan()).toEqual(new Str('"123123"', '123123'));
+        const lexer = new Lexer('"test string." "123""123123"');
+        expect(lexer.scan()).toEqual(new Str('"test string."', 'test string.'));
+        expect(lexer.scan()).toEqual(new Str('"123"', "123"));
+        expect(lexer.scan()).toEqual(new Str('"123123"', '123123'));
     });
+
+    test('string throws', () => {
+        const lexer = new Lexer('"test string." "123""123123');
+        expect(lexer.scan()).toEqual(new Str('"test string."', 'test string.'));
+        expect(lexer.scan()).toEqual(new Str('"123"', "123"));
+        expect(() => lexer.scan()).toThrow();
+    });
+
 
     test('keywords and id', () => {
         const lexer = new Lexer(`var a1 = 1;
