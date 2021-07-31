@@ -16,7 +16,7 @@ export class Num extends Token {
         public readonly lexeme: string,
         public readonly literal: number,
     ) {
-        super(Tag.NUM, lexeme);
+        super(Tag.NUM, 'num');
     }
 
     public toString() {
@@ -29,7 +29,7 @@ export class Str extends Token {
         public readonly lexeme: string,
         public readonly literal: string,
     ) {
-        super(Tag.STR, lexeme);
+        super(Tag.STR, 'str');
     }
 
     public toString() {
