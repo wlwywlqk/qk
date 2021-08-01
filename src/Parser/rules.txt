@@ -1,0 +1,52 @@
+Program ->  Declarations Statements        # console.log(111); 
+Declarations -> Declarations Declaration
+    | ε
+Declaration -> Type Declarator ;
+Type -> var
+Declarator -> id
+    | id = Expression
+Expression -> AssignExpression
+    | BoolExpression
+    | EqualityExpression
+    | RelExpression
+    | ArithExpression
+    | UnaryExpression
+    | id
+    | num
+    | str
+    | true
+    | false
+
+AssignExpression -> id = Expression
+BoolExpression -> Expression || Expression
+    | Expression && Expression
+EqualityExpression -> Expression == Expression
+    |= Expression != Expression
+RelExpression -> Expression < Expression
+    |= Expression <= Expression
+    |= Expression > Expression
+    |= Expression >= Expression
+
+ArithExpression -> Expression + Expression
+    |= Expression - Expression
+    | Expression * Expression
+    |= Expression / Expression
+UnaryExpression -> ! Expression
+    =| - Expression
+
+
+Statements -> Statements Statement
+    | ε
+Statement -> ExpressionStatement
+    | IfStatement
+    | WhileStatement
+    | DoWhileStatement
+    | BlockStatement
+
+ExpressionStatement -> Expression ;
+IfStatement -> if ( Expression ) BlockStatement
+    | if ( Expression ) BlockStatement else BlockStatement
+    | if ( Expression ) BlockStatement else IfStatement
+WhileStatement -> while ( Expression ) BlockStatement
+DoWhileStatement -> do BlockStatement while ( Expression )
+BlockStatement -> { Declarations Statements }
