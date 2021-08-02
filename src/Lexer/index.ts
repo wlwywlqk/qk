@@ -2,6 +2,8 @@ import { Token, Num, Str } from './token';
 import { Tag } from './tag';
 import { LexerError } from './error';
 
+import { isNumber, isLetter } from '../utils';
+
 export class Lexer {
     public line = 1;
     public col = 0;
@@ -63,7 +65,7 @@ export class Lexer {
             return this.scanImpl();
         } catch (e) {
             this.error = e;
-            throw e;   
+            throw e;
         }
     }
 
@@ -103,9 +105,9 @@ export class Lexer {
                     return new Token(Tag.COMMA, ',');
                 case ';':
                     return new Token(Tag.SEMICOLON, ';');
-                case '.': 
+                case '.':
                     return new Token(Tag.DOT, '.');
-                case '+': 
+                case '+':
                     return new Token(Tag.PLUS, '+');
                 case '-':
                     return new Token(Tag.MINUS, '-');
@@ -152,17 +154,17 @@ export class Lexer {
                     return new Token(Tag.LESS, '<');
 
                 default:
-                    if (this.isNumber(c)) {
+                    if (isNumber(c)) {
                         this.start = this.current - 1;
 
-                        while(this.isNumber(this.peek())) {
+                        while (isNumber(this.peek())) {
                             this.advance();
                         }
 
                         if (this.peek() === '.') {
                             let hasDecimals = false;
                             this.advance();
-                            while(this.isNumber(this.peek())) {
+                            while (isNumber(this.peek())) {
                                 hasDecimals = true
                                 this.advance();
                             }
@@ -176,14 +178,14 @@ export class Lexer {
                             }
 
                         }
-                        if (this.isLetter(this.peek())) {
+                        if (isLetter(this.peek())) {
                             throw new LexerError('Unexpected number.', this.line, this.col);
                         }
                         const lexeme = this.source.slice(this.start, this.current)
                         return new Num(lexeme, Number(lexeme));
-                    } else if (this.isLetter(c)) {
+                    } else if (isLetter(c)) {
                         this.start = this.current - 1;
-                        while (this.isLetter(this.peek()) || this.isNumber(this.peek())) {
+                        while (isLetter(this.peek()) || isNumber(this.peek())) {
                             this.advance();
                         }
                         const lexeme = this.source.slice(this.start, this.current);
@@ -197,13 +199,4 @@ export class Lexer {
         }
         return null
     }
-
-    private isNumber(char: string): boolean {
-        return char >= '0' && char <= '9';
-    }
-
-    private isLetter(char: string): boolean {
-        return char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z';
-    }
-
 }
