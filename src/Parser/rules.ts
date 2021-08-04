@@ -82,6 +82,14 @@ export class Rules {
         return this.pickLetter();
     }
 
+    private pickProductionRight(): ProductionRight {
+        return {
+            items: [],
+            left: false,
+            right: false
+        };
+    }
+
 
     private pickProduction(): Production | null {
         try {
