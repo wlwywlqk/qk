@@ -1,14 +1,12 @@
 import { isNumber, isLetter } from '../utils';
 import { ParserRuleError } from './error';
 
-export interface ProductionRightSingle {
-    code: string;
-    symbols: string[];
+export class ProductionRightSingle {
+    constructor(public symbols: string[] = [], public code: string = '') { }
 }
-export interface ProductionRightEqual {
-    items: ProductionRightSingle[];
-    left: boolean;
-    right: boolean;
+export class ProductionRightEqual {
+
+    constructor(public items: ProductionRightSingle[] = [], public left: boolean = true) { }
 }
 
 export type ProductionLeft = string;
@@ -17,11 +15,7 @@ export type ProductionRight = ProductionRightSingle | ProductionRightEqual;
 
 export class Production {
 
-    public left: ProductionLeft = '';
-    public right: ProductionRight[] = [];
-    constructor () {
-
-    }
+    constructor(public left: ProductionLeft = '', public right: ProductionRight[] = []) { }
 }
 
 export class Rules {
@@ -31,20 +25,30 @@ export class Rules {
 
     private i = 0;
 
-    public error: ParserRuleError | null = null
+    constructor(public readonly rules: string) {
 
-    constructor (public readonly rules: string) {
-
-        let production = null
-
-        while (production = this.pickProduction()) {
-            this.productions.push(production);
+        const len = this.rules.length;
+        while (this.i < len) {
+            this.productions.push(this.pickProduction());
         }
+    }
+
+    public get end(): boolean {
+        return this.i >= this.rules.length;
+    }
+
+    private peek(): string {
+        return this.rules[this.i];
     }
 
     private advance() {
         this.i++;
-        this.col++;
+        if (this.peek() === '\n') {
+            this.col = 0;
+            this.line++;
+        } else {
+            this.col++;
+        }
     }
 
     private pick(expected: string) {
@@ -52,16 +56,17 @@ export class Rules {
         let j = 0;
         const len = expected.length;
         const start = this.col;
-        while (j < len && this.rules[this.i] === expected[j]) {
+        while (j < len && this.peek() === expected[j]) {
             this.advance();
+            j++;
         }
-        if (j !== len - 1) {
-            throw new ParserRuleError('Unexpected picked.', this.line, start);
+        if (j !== len) {
+            throw new ParserRuleError(`Unexpected pick ${expected}.`, this.line, start);
         }
     }
 
     private pickBlank() {
-        while (this.rules[this.i] === ' ') {
+        while (this.peek() === ' ') {
             this.advance();
         }
     }
@@ -69,11 +74,26 @@ export class Rules {
     private pickLetter(): string {
         this.pickBlank();
         const start = this.i;
-        while (isLetter(this.rules[this.i])) {
+        if (!this.end && isLetter(this.peek())) {
+            this.advance();
+            while (!this.end && this.peek() !== ' ' && this.peek() !== '\n') {
+                this.advance();
+            }
+        }
+        
+        if (this.i === start) {
+            throw new ParserRuleError('Unexpected letter.', this.line, this.col);
+        }
+        return this.rules.slice(start, this.i);
+    }
+
+    private pickSymbol(): string {
+        const start = this.i;
+        while (!this.end && this.peek() !== ' ' && this.peek() !== '\n') {
             this.advance();
         }
         if (this.i === start) {
-            throw new ParserRuleError('Unexpected letter.', this.line, this.col);
+            throw new ParserRuleError('Unexpected symbol.', this.line, this.col);
         }
         return this.rules.slice(start, this.i);
     }
@@ -82,26 +102,91 @@ export class Rules {
         return this.pickLetter();
     }
 
-    private pickProductionRight(): ProductionRight {
-        return {
-            items: [],
-            left: false,
-            right: false
-        };
+    private pickProductionRightSymbols(): string[] {
+
+        const symbols = [];
+
+        this.pickBlank();
+        while (!this.end && this.peek() !== '#' && this.peek() !== '\n') {
+            symbols.push(this.pickSymbol());
+            this.pickBlank();
+        }
+        return symbols;
+    }
+
+    private pickProductionRightCode(): string {
+
+        this.pickBlank();
+        const start = this.i;
+        while (!this.end && this.peek() !== '\n') {
+            this.advance();
+        }
+
+        return this.rules.slice(start, this.i);
+    }
+
+    private pickProductionRightSingle(): ProductionRightSingle {
+        const rightSingle = new ProductionRightSingle();
+        rightSingle.symbols = this.pickProductionRightSymbols();
+        if (this.peek() === '#') {
+            this.pick('#');
+            rightSingle.code = this.pickProductionRightCode();
+        }
+        return rightSingle;
+    }
+
+    private pickProductionRight(): ProductionRight[] {
+        const productionRight: ProductionRight[] = [this.pickProductionRightSingle()];
+        while (!this.end && this.peek() === '\n') {
+            this.pick('\n');
+            this.pickBlank();
+            const last = productionRight[productionRight.length - 1];
+            switch (this.peek()) {
+                case '|':
+                    this.pick('|');
+                    if (this.peek() === '=') {
+                        this.pick('=');
+                        if (last instanceof ProductionRightSingle) {
+                            productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle, this.pickProductionRightSingle()], true))
+                        } else {
+                            if (last.left) {
+                                last.items.push(this.pickProductionRightSingle());
+                            } else {
+                                throw new ParserRuleError('Unexpected equal left false.', this.line, this.col); 
+                            }
+                        }
+                    } else {
+                        productionRight.push(this.pickProductionRightSingle());
+                    }
+                    break;
+                case '=': 
+                    this.pick('=|');
+                    if (last instanceof ProductionRightSingle) {
+                        productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle], false))
+                    } else {
+                        if (!last.left) {
+                            last.items.push(this.pickProductionRightSingle());
+                        } else {
+                            throw new ParserRuleError('Unexpected equal left true.', this.line, this.col); 
+                        }
+                    }
+                    break;
+                case '\n': continue;
+                default: return productionRight;
+            }
+            
+        }
+
+        return productionRight;
     }
 
 
-    private pickProduction(): Production | null {
-        try {
-            const left = this.pickProductionLeft();
-            this.pick('->');
-            const right = this.pickProductionRight();
-        } catch (e: unknown) {
-            this.error = e as ParserRuleError;
-            return null;
-        }
-        
+    private pickProduction(): Production {
+        const production = new Production();
+        production.left = this.pickProductionLeft();
+        this.pick('->');
+        production.right = this.pickProductionRight();
 
-        return null;
+        return production;
     }
 }

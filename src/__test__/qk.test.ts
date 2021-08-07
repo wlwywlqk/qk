@@ -5,5 +5,5 @@ import { LexerError } from '../Lexer/error';
 import { Parser } from '../Parser'
 
 describe('qk', () => {
-    
+    test('', () => {})
 });
