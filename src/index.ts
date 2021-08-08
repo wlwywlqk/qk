@@ -9,3 +9,4 @@ const rules = fs.readFileSync(path.resolve(__dirname, './Parser/rules.txt')).toS
 
 
 const parser = new Parser(rules);
+

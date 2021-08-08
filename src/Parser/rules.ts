@@ -26,7 +26,7 @@ export class Rules {
     private i = 0;
 
     constructor(public readonly rules: string) {
-
+        this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n');
         const len = this.rules.length;
         while (this.i < len) {
             this.productions.push(this.pickProduction());
@@ -162,7 +162,7 @@ export class Rules {
                 case '=': 
                     this.pick('=|');
                     if (last instanceof ProductionRightSingle) {
-                        productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle], false))
+                        productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle, this.pickProductionRightSingle()], false))
                     } else {
                         if (!last.left) {
                             last.items.push(this.pickProductionRightSingle());

@@ -15,6 +15,19 @@ describe('rules', () => {
         expect(rules.end).toBeTruthy();
     });
 
+    test('rules line col and end', () => {
+        const rulesStr = `Program -> Declarations Statements
+Program -> Declarations Statements
+Program -> Declarations Statements
+Program -> Declarations Statements
+Program -> Declarations Statements
+Program -> Declarations Statements`;
+        const rules = new Rules(rulesStr);
+        expect(rules.line).toEqual(6);
+        expect(rules.col).toEqual(35);
+        expect(rules.end).toBeTruthy();
+    });
+
     test('single rules with code', () => {
         const rules = new Rules(`Program -> Declarations Statements   # test code`);
 
@@ -23,7 +36,7 @@ describe('rules', () => {
         ]);
     });
 
-    test('rules with mutiple right equal', () => {
+    test('rules with right equal', () => {
         const rules = new Rules(`RelExpression -> Expression < Expression
         |= Expression <= Expression
         |= Expression > Expression
@@ -53,6 +66,8 @@ describe('rules', () => {
         ]);
     });
 
+
+
     test('multiple line rules', () => {
         const rules = new Rules(`Program -> Declarations Statements   # test code
         Program1 -> Declarations Statements   # test code1
@@ -62,6 +77,53 @@ describe('rules', () => {
             new Production('Program', [new ProductionRightSingle(['Declarations', 'Statements'], 'test code')]),
             new Production('Program1', [new ProductionRightSingle(['Declarations', 'Statements'], 'test code1')])
         ]);
+    });
+
+
+    
+    test('multiple newline', () => {
+        const rules = new Rules(`Program -> Declarations Statements   # test code
+        
+        
+        Program1 -> Declarations Statements   # test code1
+        `);
+
+        expect(rules.productions).toEqual([
+            new Production('Program', [new ProductionRightSingle(['Declarations', 'Statements'], 'test code')]),
+            new Production('Program1', [new ProductionRightSingle(['Declarations', 'Statements'], 'test code1')])
+        ]);
+    });
+
+
+    test('rules with right equal and newline', () => {
+        const rules = new Rules(`RelExpression -> Expression < Expression
+        |= Expression <= Expression
+
+        |= Expression > Expression
+        |= Expression >= Expression`);
+
+        expect(rules.productions).toEqual([
+            new Production('RelExpression', [
+                new ProductionRightEqual([
+                    new ProductionRightSingle(['Expression', '<', 'Expression']),
+                    new ProductionRightSingle(['Expression', '<=', 'Expression']),
+                    new ProductionRightSingle(['Expression', '>', 'Expression']),
+                    new ProductionRightSingle(['Expression', '>=', 'Expression']),
+                ], true),
+            ])
+        ]);
+    });
+
+
+    test('rules with right equal throws', () => {
+
+        expect(() => {
+            const rules = new Rules(`RelExpression -> Expression < Expression
+            |= Expression <= Expression
+
+            =| Expression > Expression
+            |= Expression >= Expression`);
+        }).toThrow();
     });
 
 });
