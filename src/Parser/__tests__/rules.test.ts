@@ -26,6 +26,8 @@ Program -> Declarations Statements`;
         expect(rules.line).toEqual(6);
         expect(rules.col).toEqual(35);
         expect(rules.end).toBeTruthy();
+
+        expect(rules.Nonterminals).toEqual(new Set(['Program']));
     });
 
     test('single rules with code', () => {
@@ -77,6 +79,7 @@ Program -> Declarations Statements`;
             new Production('Program', [new ProductionRightSingle(['Declarations', 'Statements'], 'test code')]),
             new Production('Program1', [new ProductionRightSingle(['Declarations', 'Statements'], 'test code1')])
         ]);
+        expect(rules.Nonterminals).toEqual(new Set(['Program', 'Program1']));
     });
 
 

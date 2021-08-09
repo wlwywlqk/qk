@@ -25,12 +25,17 @@ export class Rules {
 
     private i = 0;
 
+    public Nonterminals = new Set<string>();
+
     constructor(public readonly rules: string) {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n');
         const len = this.rules.length;
         while (this.i < len) {
-            this.productions.push(this.pickProduction());
+            const picked = this.pickProduction()
+            this.productions.push(picked);
+            this.Nonterminals.add(picked.left);
         }
+
     }
 
     public get end(): boolean {
