@@ -2,10 +2,9 @@ import { isNumber, isLetter } from '../utils';
 import { ParserRuleError } from './error';
 
 export class ProductionRightSingle {
-    constructor(public symbols: string[] = [], public code: string = '') { }
+    constructor(public symbols: string[] = [], public code: string = '', public production: Production | null = null, public equal: ProductionRightEqual | null = null) { }
 }
 export class ProductionRightEqual {
-
     constructor(public items: ProductionRightSingle[] = [], public left: boolean = true) { }
 }
 
@@ -14,8 +13,11 @@ export type ProductionLeft = string;
 export type ProductionRight = ProductionRightSingle | ProductionRightEqual;
 
 export class Production {
-
     constructor(public left: ProductionLeft = '', public right: ProductionRight[] = []) { }
+}
+
+export class ProductionItem {
+    constructor(public left: ProductionLeft = '', public right: ProductionRightSingle[] = [], public index: number = 0, public lookahead: string[] = []) { }
 }
 
 export class Rules {
@@ -24,6 +26,7 @@ export class Rules {
     public col = 0;
 
     private i = 0;
+    private currentProduction: Production | null = null;
 
     public Nonterminals = new Set<string>();
 
@@ -35,7 +38,6 @@ export class Rules {
             this.productions.push(picked);
             this.Nonterminals.add(picked.left);
         }
-
     }
 
     public get end(): boolean {
@@ -132,6 +134,7 @@ export class Rules {
 
     private pickProductionRightSingle(): ProductionRightSingle {
         const rightSingle = new ProductionRightSingle();
+        rightSingle.production = this.currentProduction;
         rightSingle.symbols = this.pickProductionRightSymbols();
         if (this.peek() === '#') {
             this.pick('#');
@@ -152,10 +155,17 @@ export class Rules {
                     if (this.peek() === '=') {
                         this.pick('=');
                         if (last instanceof ProductionRightSingle) {
-                            productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle, this.pickProductionRightSingle()], true))
+                            const pop = productionRight.pop() as ProductionRightSingle;
+                            const picked = this.pickProductionRightSingle();
+                            const equal = new ProductionRightEqual([pop, picked], true);
+                            pop.equal = equal;
+                            picked.equal = equal;
+                            productionRight.push(equal);
                         } else {
                             if (last.left) {
-                                last.items.push(this.pickProductionRightSingle());
+                                const picked = this.pickProductionRightSingle();
+                                picked.equal = last;
+                                last.items.push(picked);
                             } else {
                                 throw new ParserRuleError('Unexpected equal left false.', this.line, this.col); 
                             }
@@ -167,10 +177,17 @@ export class Rules {
                 case '=': 
                     this.pick('=|');
                     if (last instanceof ProductionRightSingle) {
-                        productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle, this.pickProductionRightSingle()], false))
+                        const pop = productionRight.pop() as ProductionRightSingle;
+                        const picked = this.pickProductionRightSingle();
+                        const equal = new ProductionRightEqual([pop, picked], false);
+                        pop.equal = equal;
+                        picked.equal = equal;
+                        productionRight.push(equal);
                     } else {
                         if (!last.left) {
-                            last.items.push(this.pickProductionRightSingle());
+                            const picked = this.pickProductionRightSingle();
+                            picked.equal = last;
+                            last.items.push(picked);
                         } else {
                             throw new ParserRuleError('Unexpected equal left true.', this.line, this.col); 
                         }
@@ -188,10 +205,11 @@ export class Rules {
 
     private pickProduction(): Production {
         const production = new Production();
+        this.currentProduction = production;
         production.left = this.pickProductionLeft();
         this.pick('->');
         production.right = this.pickProductionRight();
-
+        this.currentProduction = null;
         return production;
     }
 }
