@@ -17,7 +17,7 @@ export class Production {
 }
 
 export class ProductionItem {
-    constructor(public left: ProductionLeft = '', public right: ProductionRightSingle[] = [], public index: number = 0, public lookahead: string[] = []) { }
+    constructor(public ref: ProductionRightSingle, public index: number = 0, public lookahead: string[] = []) { }
 }
 
 export class Rules {
