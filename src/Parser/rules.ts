@@ -29,11 +29,11 @@ export enum Action {
 
 export class Rules {
     public productions: Production[] = [];
+    public productionMap: Map<ProductionLeft, Production> = new Map();
     public line = 1;
     public col = 0;
 
     private i = 0;
-    private currentProduction: Production | null = null;
 
     public Nonterminals = new Set<string>();
 
@@ -41,10 +41,13 @@ export class Rules {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n');
         const len = this.rules.length;
         while (this.i < len) {
-            const picked = this.pickProduction()
-            this.productions.push(picked);
-            this.Nonterminals.add(picked.left);
+            const picked = this.pickProduction();
+            if (picked) {
+                this.productions.push(picked);
+                this.Nonterminals.add(picked.left);
+            }
         }
+        this.enhanceProductions();
     }
 
     public get end(): boolean {
@@ -53,6 +56,24 @@ export class Rules {
 
     private peek(): string {
         return this.rules[this.i];
+    }
+
+    private enhanceProductions(): void {
+        for (let i = 0, ilen = this.productions.length; i < ilen; i++) {
+            const production = this.productions[i];
+            for (let j = 0, jlen = production.right.length; j < jlen; j++) {
+                const right = production.right[j];
+                if (right instanceof ProductionRightSingle) {
+                    right.production = production;
+                } else {
+                    for (let k = 0, klen = right.items.length; k < klen; k++) {
+                        const item = right.items[k];
+                        item.production = production;
+                        item.equal = right;
+                    }
+                }
+            }
+        }
     }
 
     private advance() {
@@ -94,7 +115,7 @@ export class Rules {
                 this.advance();
             }
         }
-        
+
         if (this.i === start) {
             throw new ParserRuleError('Unexpected letter.', this.line, this.col);
         }
@@ -141,7 +162,6 @@ export class Rules {
 
     private pickProductionRightSingle(): ProductionRightSingle {
         const rightSingle = new ProductionRightSingle();
-        rightSingle.production = this.currentProduction;
         rightSingle.symbols = this.pickProductionRightSymbols();
         if (this.peek() === '#') {
             this.pick('#');
@@ -162,61 +182,53 @@ export class Rules {
                     if (this.peek() === '=') {
                         this.pick('=');
                         if (last instanceof ProductionRightSingle) {
-                            const pop = productionRight.pop() as ProductionRightSingle;
-                            const picked = this.pickProductionRightSingle();
-                            const equal = new ProductionRightEqual([pop, picked], true);
-                            pop.equal = equal;
-                            picked.equal = equal;
-                            productionRight.push(equal);
+                            productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle, this.pickProductionRightSingle()], true));
                         } else {
                             if (last.left) {
-                                const picked = this.pickProductionRightSingle();
-                                picked.equal = last;
-                                last.items.push(picked);
+                                last.items.push(this.pickProductionRightSingle());
                             } else {
-                                throw new ParserRuleError('Unexpected equal left false.', this.line, this.col); 
+                                throw new ParserRuleError('Unexpected equal left false.', this.line, this.col);
                             }
                         }
                     } else {
                         productionRight.push(this.pickProductionRightSingle());
                     }
                     break;
-                case '=': 
+                case '=':
                     this.pick('=|');
                     if (last instanceof ProductionRightSingle) {
-                        const pop = productionRight.pop() as ProductionRightSingle;
-                        const picked = this.pickProductionRightSingle();
-                        const equal = new ProductionRightEqual([pop, picked], false);
-                        pop.equal = equal;
-                        picked.equal = equal;
-                        productionRight.push(equal);
+                        productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle, this.pickProductionRightSingle()], false));
                     } else {
                         if (!last.left) {
-                            const picked = this.pickProductionRightSingle();
-                            picked.equal = last;
-                            last.items.push(picked);
+                            last.items.push(this.pickProductionRightSingle());
                         } else {
-                            throw new ParserRuleError('Unexpected equal left true.', this.line, this.col); 
+                            throw new ParserRuleError('Unexpected equal left true.', this.line, this.col);
                         }
                     }
                     break;
                 case '\n': continue;
                 default: return productionRight;
             }
-            
+
         }
 
         return productionRight;
     }
 
 
-    private pickProduction(): Production {
-        const production = new Production();
-        this.currentProduction = production;
-        production.left = this.pickProductionLeft();
+    private pickProduction(): Production | null {
+        const left: ProductionLeft = this.pickProductionLeft();
         this.pick('->');
-        production.right = this.pickProductionRight();
-        this.currentProduction = null;
-        return production;
+        if (this.productionMap.has(left)) {
+            const production = this.productionMap.get(left)!;
+            production.right.push(...this.pickProductionRight());
+            return null
+        } else {
+            const production = new Production();
+            production.left = left;
+            this.productionMap.set(left, production);
+            production.right.push(...this.pickProductionRight());
+            return production;
+        }
     }
 }

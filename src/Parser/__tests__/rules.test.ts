@@ -109,7 +109,10 @@ Program -> Declarations Statements`;
         |= Expression <= Expression
 
         |= Expression > Expression
-        |= Expression >= Expression`);
+        |= Expression >= Expression
+
+        RelExpression -> Expression < Expression
+        `);
 
         const expectedProduction = new Production('RelExpression', []);
         const expectedEqual = new ProductionRightEqual([], true);
@@ -119,6 +122,8 @@ Program -> Declarations Statements`;
         expectedEqual.items.push(new ProductionRightSingle(['Expression', '>=', 'Expression'], '', expectedProduction, expectedEqual));
 
         expectedProduction.right.push(expectedEqual);
+        expectedProduction.right.push(new ProductionRightSingle(['Expression', '<', 'Expression'], '', expectedProduction));
+
         expect(rules.productions).toEqual([ expectedProduction ]);
     });
 
