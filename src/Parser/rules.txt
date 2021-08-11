@@ -1,6 +1,6 @@
 Program ->  Declarations Statements        # console.log(111); 
 Declarations -> Declarations Declaration
-    | ε
+    |
 Declaration -> Type Declarator ;
 Type -> var
 Declarator -> id
@@ -36,7 +36,7 @@ UnaryExpression -> ! Expression
 
 
 Statements -> Statements Statement
-    | ε
+    |
 Statement -> ExpressionStatement
     | IfStatement
     | WhileStatement

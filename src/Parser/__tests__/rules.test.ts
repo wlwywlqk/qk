@@ -56,12 +56,12 @@ Program -> Declarations Statements`;
 
     test('rules with mutiple right', () => {
         const rules = new Rules(`Declarations -> Declarations Declaration
-        | ε`);
+        |`);
 
         const expectedProduction = new Production('Declarations', []);
 
         expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Declaration'], '', expectedProduction));
-        expectedProduction.right.push(new ProductionRightSingle(['ε'], '', expectedProduction));
+        expectedProduction.right.push(new ProductionRightSingle([], '', expectedProduction));
 
         expect(rules.productions).toEqual([ expectedProduction ]);
     });

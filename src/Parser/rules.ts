@@ -20,6 +20,13 @@ export class ProductionItem {
     constructor(public ref: ProductionRightSingle, public index: number = 0, public lookahead: string[] = []) { }
 }
 
+export enum Action {
+    SHIFT,
+    REDUCE,
+    ACCEPT,
+    ERROR
+}
+
 export class Rules {
     public productions: Production[] = [];
     public line = 1;
