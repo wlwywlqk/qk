@@ -32,10 +32,9 @@ export class Rules {
     public productionMap: Map<ProductionLeft, Production> = new Map();
     public line = 1;
     public col = 0;
+    public Nonterminals = new Set<string>();
 
     private i = 0;
-
-    public Nonterminals = new Set<string>();
 
     constructor(public readonly rules: string) {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n');
@@ -50,12 +49,16 @@ export class Rules {
         this.enhanceProductions();
     }
 
-    public get end(): boolean {
-        return this.i >= this.rules.length;
+    private first() {
+
     }
 
-    private peek(): string {
-        return this.rules[this.i];
+    private goto() {
+
+    }
+
+    private closure() {
+        
     }
 
     private enhanceProductions(): void {
@@ -74,6 +77,13 @@ export class Rules {
                 }
             }
         }
+    }
+    public get end(): boolean {
+        return this.i >= this.rules.length;
+    }
+
+    private peek(): string {
+        return this.rules[this.i];
     }
 
     private advance() {
