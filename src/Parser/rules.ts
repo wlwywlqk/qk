@@ -53,6 +53,10 @@ export class Rules {
 
     }
 
+    private follow() {
+        
+    }
+
     private goto() {
 
     }
