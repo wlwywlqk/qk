@@ -27,14 +27,19 @@ export enum Action {
     ERROR
 }
 
+export type Terminal = string;
+export type NonTerminal = string;
+
 export class Rules {
     public productions: Production[] = [];
     public productionMap: Map<ProductionLeft, Production> = new Map();
     public line = 1;
     public col = 0;
-    public Nonterminals = new Set<string>();
+    public Nonterminals = new Set<NonTerminal>();
 
     private i = 0;
+
+    private FirstMap = new Map< Terminal | NonTerminal, Set<Terminal>>();
 
     constructor(public readonly rules: string) {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n');
@@ -47,14 +52,6 @@ export class Rules {
             }
         }
         this.enhanceProductions();
-    }
-
-    private first() {
-
-    }
-
-    private follow() {
-        
     }
 
     private goto() {
