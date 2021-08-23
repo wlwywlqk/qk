@@ -17,7 +17,7 @@ export class Production {
 }
 
 export class ProductionItem {
-    constructor(public ref: ProductionRightSingle, public index: number = 0, public lookaheads: Set<string> = new Set()) { }
+    constructor(public ref: ProductionRightSingle, public index: number = 0, public lookaheads: Set<Terminal> = new Set()) { }
 }
 
 export enum Action {
@@ -52,6 +52,13 @@ export class Rules {
             }
         }
         this.enhanceProductions();
+
+        this.collectItems();
+    }
+
+    private collectItems() {
+        const rootItem = new ProductionItem(this.productions[0].right[0] as ProductionRightSingle, 0, new Set(['$']));
+        
     }
 
     private goto() {
