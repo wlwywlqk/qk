@@ -62,13 +62,17 @@ export class Rules {
         for (const item of this.ProductionRightSingleSet) {
             this.ProductionItemMap.set(item, item.symbols.map((_, index) => new ProductionItem(item, index)));
         }
+
+        const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
+
+        
     }
 
     private goto() {
 
     }
 
-    private closure() {
+    private closure(items: Set<ProductionItem>) {
         
     }
 
