@@ -39,7 +39,9 @@ export class Rules {
 
     private i = 0;
 
-    private FirstMap = new Map< Terminal | NonTerminal, Set<Terminal>>();
+    private FirstMap = new Map<Terminal | NonTerminal, Set<Terminal>>();
+    private ProductionRightSingleSet = new Set<ProductionRightSingle>();
+    private ProductionItemMap = new WeakMap<ProductionRightSingle, ProductionItem[]>();
 
     constructor(public readonly rules: string) {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n');
@@ -57,8 +59,9 @@ export class Rules {
     }
 
     private collectItems() {
-        const rootItem = new ProductionItem(this.productions[0].right[0] as ProductionRightSingle, 0, new Set(['$']));
-        
+        for (const item of this.ProductionRightSingleSet) {
+            this.ProductionItemMap.set(item, item.symbols.map((_, index) => new ProductionItem(item, index)));
+        }
     }
 
     private goto() {
@@ -180,6 +183,7 @@ export class Rules {
 
     private pickProductionRightSingle(): ProductionRightSingle {
         const rightSingle = new ProductionRightSingle();
+        this.ProductionRightSingleSet.add(rightSingle);
         rightSingle.symbols = this.pickProductionRightSymbols();
         if (this.peek() === '#') {
             this.pick('#');
