@@ -39,9 +39,12 @@ export class Rules {
 
     private i = 0;
 
+    private SingleSetMap = new WeakMap<Production, Set<ProductionRightSingle>>();
     private FirstMap = new Map<Terminal | NonTerminal, Set<Terminal>>();
     private ProductionRightSingleSet = new Set<ProductionRightSingle>();
     private ProductionItemMap = new WeakMap<ProductionRightSingle, ProductionItem[]>();
+
+    private ProductionItemSets: Set<ProductionItem>[] = [];
 
     constructor(public readonly rules: string) {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n');
@@ -64,7 +67,8 @@ export class Rules {
         }
 
         const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
-
+        const rootItemSet = new Set([rootItem]);
+        this.ProductionItemSets.push(this.closure(rootItemSet))
         
     }
 
@@ -72,22 +76,27 @@ export class Rules {
 
     }
 
-    private closure(items: Set<ProductionItem>) {
+    private closure(items: Set<ProductionItem>): Set<ProductionItem> {
+
         
     }
 
     private enhanceProductions(): void {
         for (let i = 0, ilen = this.productions.length; i < ilen; i++) {
             const production = this.productions[i];
+            const singleSet = new Set<ProductionRightSingle>();
+
             for (let j = 0, jlen = production.right.length; j < jlen; j++) {
                 const right = production.right[j];
                 if (right instanceof ProductionRightSingle) {
                     right.production = production;
+                    singleSet.add(right);
                 } else {
                     for (let k = 0, klen = right.items.length; k < klen; k++) {
                         const item = right.items[k];
                         item.production = production;
                         item.equal = right;
+                        singleSet.add(right);
                     }
                 }
             }
