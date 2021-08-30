@@ -39,7 +39,7 @@ export class Rules {
 
     private i = 0;
 
-    private SingleSetMap = new WeakMap<Production, Set<ProductionRightSingle>>();
+    private ProductionSingleSetMap = new WeakMap<Production, Set<ProductionRightSingle>>();
     private FirstMap = new Map<Terminal | NonTerminal, Set<Terminal>>();
     private ProductionRightSingleSet = new Set<ProductionRightSingle>();
     private ProductionItemMap = new WeakMap<ProductionRightSingle, ProductionItem[]>();
@@ -63,7 +63,7 @@ export class Rules {
 
     private collectItems() {
         for (const item of this.ProductionRightSingleSet) {
-            this.ProductionItemMap.set(item, item.symbols.map((_, index) => new ProductionItem(item, index)));
+            this.ProductionItemMap.set(item, Array.from(Array(item.symbols.length + 1)).map((_, index) => new ProductionItem(item, index)));
         }
 
         const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
@@ -85,7 +85,7 @@ export class Rules {
         for (let i = 0, ilen = this.productions.length; i < ilen; i++) {
             const production = this.productions[i];
             const singleSet = new Set<ProductionRightSingle>();
-
+            this.ProductionSingleSetMap.set(production, singleSet);
             for (let j = 0, jlen = production.right.length; j < jlen; j++) {
                 const right = production.right[j];
                 if (right instanceof ProductionRightSingle) {
@@ -96,7 +96,7 @@ export class Rules {
                         const item = right.items[k];
                         item.production = production;
                         item.equal = right;
-                        singleSet.add(right);
+                        singleSet.add(item);
                     }
                 }
             }
