@@ -71,6 +71,8 @@ export class Rules {
         const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
         const rootItemCoreSet = new Set([rootItem]);
         this.ProductionItemCoreSets.push(rootItemCoreSet);
+
+        const rootClosure = this.closure(rootItemCoreSet);
         
     }
 
