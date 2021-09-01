@@ -44,8 +44,10 @@ export class Rules {
     private ProductionRightSingleSet = new Set<ProductionRightSingle>();
     private ProductionItemMap = new WeakMap<ProductionRightSingle, ProductionItem[]>();
 
-    private ProductionItemSets: Set<ProductionItem>[] = [];
+    private ProductionItemCoreSets: Set<ProductionItem>[] = [];
+    private ProductionItemClosureMap = new WeakMap<Set<ProductionItem>, Set<ProductionItem>>();
 
+    private NullableMap = new WeakMap<Production, boolean>();
     constructor(public readonly rules: string) {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n');
         const len = this.rules.length;
@@ -67,17 +69,26 @@ export class Rules {
         }
 
         const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
-        const rootItemSet = new Set([rootItem]);
-        this.ProductionItemSets.push(this.closure(rootItemSet))
+        const rootItemCoreSet = new Set([rootItem]);
+        this.ProductionItemCoreSets.push(rootItemCoreSet);
         
+    }
+
+    private nullable(production: Production): boolean {
+        if (this.NullableMap.has(production)) {
+            return this.NullableMap.get(production)!;
+        }
+        return false;
     }
 
     private goto() {
 
     }
 
-    private closure(items: Set<ProductionItem>): Set<ProductionItem> {
-
+    private closure(set: Set<ProductionItem>): Set<ProductionItem> {
+        if (this.ProductionItemClosureMap.has(set)) {
+            return this.ProductionItemClosureMap.get(set)!;
+        }
         
     }
 
