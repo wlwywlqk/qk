@@ -1,6 +1,9 @@
 import { isNumber, isLetter } from '../utils';
 import { ParserRuleError } from './error';
 
+
+export type Terminal = string;
+export type NonTerminal = string;
 export class ProductionRightSingle {
     constructor(public symbols: string[] = [], public code: string = '', public production: Production | null = null, public equal: ProductionRightEqual | null = null) { }
 }
@@ -8,7 +11,7 @@ export class ProductionRightEqual {
     constructor(public items: ProductionRightSingle[] = [], public left: boolean = true) { }
 }
 
-export type ProductionLeft = string;
+export type ProductionLeft = NonTerminal;
 
 export type ProductionRight = ProductionRightSingle | ProductionRightEqual;
 
@@ -27,12 +30,11 @@ export enum Action {
     ERROR
 }
 
-export type Terminal = string;
-export type NonTerminal = string;
+
 
 export class Rules {
     public productions: Production[] = [];
-    public productionMap: Map<ProductionLeft, Production> = new Map();
+    public ProductionMap: Map<ProductionLeft, Production> = new Map();
     public line = 1;
     public col = 0;
     public Nonterminals = new Set<NonTerminal>();
@@ -77,7 +79,7 @@ export class Rules {
 
     }
 
-    private first() {
+    private first(symbol: NonTerminal): Set<Terminal> {
         
     }
 
@@ -273,14 +275,14 @@ export class Rules {
     private pickProduction(): Production | null {
         const left: ProductionLeft = this.pickProductionLeft();
         this.pick('->');
-        if (this.productionMap.has(left)) {
-            const production = this.productionMap.get(left)!;
+        if (this.ProductionMap.has(left)) {
+            const production = this.ProductionMap.get(left)!;
             production.right.push(...this.pickProductionRight());
             return null
         } else {
             const production = new Production();
             production.left = left;
-            this.productionMap.set(left, production);
+            this.ProductionMap.set(left, production);
             production.right.push(...this.pickProductionRight());
             return production;
         }
