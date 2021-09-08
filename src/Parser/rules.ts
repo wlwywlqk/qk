@@ -87,7 +87,33 @@ export class Rules {
         if (this.NullableMap.has(production)) {
             return this.NullableMap.get(production)!;
         }
+
+        const nullable = this.nullableWithMemo(production, new Set([production]))
         
+        this.NullableMap.set(production, nullable);
+        return nullable;
+    }
+
+    private nullableWithMemo(production: Production, memo: Set<Production>): boolean {
+        const singleSet = this.ProductionSingleSetMap.get(production)!;
+
+        for (const single of singleSet) {
+            if (single.symbols[0] === 'ε') {
+                return true;
+            } else {
+                const { symbols } = single;
+                for (let i = 0, len = symbols.length; i < len; i++) {
+                    const symbol = symbols[i];
+                    if (!this.Nonterminals.has(symbol)) {
+                        break;
+                    } else {
+                        //
+                    }
+
+                }
+            }
+
+        }
         return false;
     }
 
