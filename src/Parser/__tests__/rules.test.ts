@@ -138,5 +138,42 @@ Program -> Declarations Statements`;
             |= Expression >= Expression`);
         }).toThrow();
     });
+
+
+    test('rules nullable', () => {
+        const simpleRules = new Rules(`
+            A -> d
+                | ε
+            B -> d
+        `);
+        expect(simpleRules.nullable('A')).toBeTruthy();
+        expect(simpleRules.nullable('B')).toBeFalsy();
+
+        const nestedRules1 = new Rules(`
+            A -> Ad
+                | b
+                | B
+            B -> A
+                | ε
+        `);
+
+        expect(nestedRules1.nullable('A')).toBeTruthy();
+        expect(nestedRules1.nullable('B')).toBeTruthy();
+
+
+        const nestedRules2 = new Rules(`
+            A -> B
+                | A
+                | C
+            B -> A
+            C -> A
+                | B
+                | ε
+        `);
+
+        expect(nestedRules2.nullable('A')).toBeTruthy();
+        expect(nestedRules2.nullable('B')).toBeTruthy();
+        expect(nestedRules2.nullable('C')).toBeTruthy();
+    });
  
 });

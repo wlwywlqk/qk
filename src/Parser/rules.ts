@@ -52,7 +52,7 @@ export class Rules {
     private FirstMap = new Map<Terminal | NonTerminal, Set<Terminal>>();
  
     constructor(public readonly rules: string) {
-        this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n');
+        this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n').trimStart();
         const len = this.rules.length;
         while (this.i < len) {
             const picked = this.pickProduction();
@@ -71,36 +71,43 @@ export class Rules {
             this.ProductionItemMap.set(item, Array.from(Array(item.symbols.length + 1)).map((_, index) => new ProductionItem(item, index)));
         }
 
-        const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
-        const rootItemCoreSet = new Set([rootItem]);
-        this.ProductionItemCoreSets.push(rootItemCoreSet);
+        // const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
+        // const rootItemCoreSet = new Set([rootItem]);
+        // this.ProductionItemCoreSets.push(rootItemCoreSet);
 
-        const rootClosure = this.closure(rootItemCoreSet);
+        // const rootClosure = this.closure(rootItemCoreSet);
 
     }
 
-    private first(symbol: NonTerminal): Set<Terminal> {
+    // private first(symbol: NonTerminal): Set<Terminal> {
         
-    }
+    // }
 
-    private nullable(nonTerminal: NonTerminal): boolean {
+    public nullable(nonTerminal: NonTerminal): boolean {
         
         if (this.NullableMap.has(nonTerminal)) {
             return this.NullableMap.get(nonTerminal)!;
         }
-        
-        this.NullableMap.set(nonTerminal, false);
+
+        const nullable = this.nullableWithMemo(nonTerminal, new Set([nonTerminal]));
+        this.NullableMap.set(nonTerminal, nullable);
+        return nullable;
+    }
+
+    private nullableWithMemo(nonTerminal: NonTerminal, memo: Set<NonTerminal>): boolean {
         const production = this.ProductionMap.get(nonTerminal)!;
         const singleSet = this.ProductionSingleSetMap.get(production)!;
         let nullable = true;
         for (const single of singleSet) {
-            if (single.symbols.length === 0 && single.symbols[0] === 'ε') {
+            if (single.symbols.length === 1 && single.symbols[0] === 'ε') {
+                nullable = true;
                 break;
             } else {
                 const { symbols } = single;
+                nullable = true;
                 for (let i = 0, len = symbols.length; i < len; i++) {
                     const symbol = symbols[i];
-                    if (!this.Nonterminals.has(symbol) || !this.nullable(symbol)) {
+                    if (!this.Nonterminals.has(symbol) || memo.has(symbol) || !this.nullableWithMemo(symbol, new Set([symbol, ...memo]))) {
                         nullable = false;
                         break;
                     }
@@ -110,8 +117,7 @@ export class Rules {
                 }
             }
         }
-        
-        this.NullableMap.set(nonTerminal, nullable);
+
         return nullable;
     }
 
@@ -119,12 +125,11 @@ export class Rules {
 
     }
 
-    private closure(set: Set<ProductionItem>): Set<ProductionItem> {
-        if (this.ProductionItemClosureMap.has(set)) {
-            return this.ProductionItemClosureMap.get(set)!;
-        }
-        
-    }
+    // private closure(set: Set<ProductionItem>): Set<ProductionItem> {
+    //     if (this.ProductionItemClosureMap.has(set)) {
+    //         return this.ProductionItemClosureMap.get(set)!;
+    //     }
+    // }
 
     private enhanceProductions(): void {
         for (let i = 0, ilen = this.productions.length; i < ilen; i++) {
