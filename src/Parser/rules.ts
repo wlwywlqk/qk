@@ -48,7 +48,7 @@ export class Rules {
     private ProductionItemCoreSets: Set<ProductionItem>[] = [];
     private ProductionItemClosureMap = new WeakMap<Set<ProductionItem>, Set<ProductionItem>>();
 
-    private NullableMap = new WeakMap<Production, boolean>();
+    private NullableMap = new Map<NonTerminal, boolean>();
     private FirstMap = new Map<Terminal | NonTerminal, Set<Terminal>>();
  
     constructor(public readonly rules: string) {
@@ -83,38 +83,36 @@ export class Rules {
         
     }
 
-    private nullable(production: Production): boolean {
-        if (this.NullableMap.has(production)) {
-            return this.NullableMap.get(production)!;
-        }
-
-        const nullable = this.nullableWithMemo(production, new Set([production]))
+    private nullable(nonTerminal: NonTerminal): boolean {
         
-        this.NullableMap.set(production, nullable);
-        return nullable;
-    }
-
-    private nullableWithMemo(production: Production, memo: Set<Production>): boolean {
+        if (this.NullableMap.has(nonTerminal)) {
+            return this.NullableMap.get(nonTerminal)!;
+        }
+        
+        this.NullableMap.set(nonTerminal, false);
+        const production = this.ProductionMap.get(nonTerminal)!;
         const singleSet = this.ProductionSingleSetMap.get(production)!;
-
+        let nullable = true;
         for (const single of singleSet) {
-            if (single.symbols[0] === 'ε') {
-                return true;
+            if (single.symbols.length === 0 && single.symbols[0] === 'ε') {
+                break;
             } else {
                 const { symbols } = single;
                 for (let i = 0, len = symbols.length; i < len; i++) {
                     const symbol = symbols[i];
-                    if (!this.Nonterminals.has(symbol)) {
+                    if (!this.Nonterminals.has(symbol) || !this.nullable(symbol)) {
+                        nullable = false;
                         break;
-                    } else {
-                        //
                     }
-
+                }
+                if (nullable) {
+                    break;
                 }
             }
-
         }
-        return false;
+        
+        this.NullableMap.set(nonTerminal, nullable);
+        return nullable;
     }
 
     private goto() {
