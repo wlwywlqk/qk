@@ -30,6 +30,9 @@ export enum Action {
     ERROR
 }
 
+export const END = '$';
+export const NULL = 'ε';
+
 
 
 export class Rules {
@@ -50,6 +53,7 @@ export class Rules {
 
     private NullableMap = new Map<NonTerminal, boolean>();
     private FirstMap = new Map<NonTerminal, Set<Terminal>>();
+    private FollowMap = new Map<NonTerminal, Set<Terminal>>();
 
     constructor(public readonly rules: string) {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n').trimStart();
@@ -130,7 +134,7 @@ export class Rules {
         const singleSet = this.ProductionSingleSetMap.get(production)!;
         let nullable = true;
         for (const single of singleSet) {
-            if (single.symbols.length === 1 && single.symbols[0] === 'ε') {
+            if (single.symbols.length === 1 && single.symbols[0] === NULL) {
                 nullable = true;
                 break;
             } else {
@@ -151,6 +155,13 @@ export class Rules {
 
         return nullable;
     }
+
+    public follow(nonTerminal: NonTerminal): Set<Terminal> {
+        if (this.FollowMap.has(nonTerminal)) {
+            return this.FollowMap.get(nonTerminal)!;
+        }
+    }
+
 
     private goto() {
 
