@@ -49,8 +49,8 @@ export class Rules {
     private ProductionItemClosureMap = new WeakMap<Set<ProductionItem>, Set<ProductionItem>>();
 
     private NullableMap = new Map<NonTerminal, boolean>();
-    private FirstMap = new Map<Terminal | NonTerminal, Set<Terminal>>();
- 
+    private FirstMap = new Map<NonTerminal, Set<Terminal>>();
+
     constructor(public readonly rules: string) {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n').trimStart();
         const len = this.rules.length;
@@ -79,22 +79,53 @@ export class Rules {
 
     }
 
-    // private first(symbol: NonTerminal): Set<Terminal> {
-        
-    // }
+    public first(nonTerminal: NonTerminal): Set<Terminal> {
+        if (this.FirstMap.has(nonTerminal)) {
+            return this.FirstMap.get(nonTerminal)!;
+        }
+
+        const firstSet = this.firstImpl(nonTerminal, new Set([nonTerminal]));
+        this.FirstMap.set(nonTerminal, firstSet);
+        return firstSet;
+    }
+
+    private firstImpl(nonTerminal: NonTerminal, memo: Set<NonTerminal>): Set<Terminal> {
+        const production = this.ProductionMap.get(nonTerminal)!;
+        const singleSet = this.ProductionSingleSetMap.get(production)!;
+        let firstSet = new Set<Terminal>();
+
+        for (const single of singleSet) {
+            const { symbols } = single;
+            for (let i = 0, len = symbols.length; i < len; i++) {
+                const symbol = symbols[i];
+                if (!this.Nonterminals.has(symbol)) {
+                    firstSet.add(symbol);
+                    break;
+                } else {
+                    if (!memo.has(symbol)) {
+                        firstSet = new Set([...firstSet, ...this.firstImpl(symbol, new Set([symbol, ...memo]))]);
+                    }
+                    if (!this.nullable(symbol)) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return firstSet;
+    }
 
     public nullable(nonTerminal: NonTerminal): boolean {
-        
         if (this.NullableMap.has(nonTerminal)) {
             return this.NullableMap.get(nonTerminal)!;
         }
 
-        const nullable = this.nullableWithMemo(nonTerminal, new Set([nonTerminal]));
+        const nullable = this.nullableImpl(nonTerminal, new Set([nonTerminal]));
         this.NullableMap.set(nonTerminal, nullable);
         return nullable;
     }
 
-    private nullableWithMemo(nonTerminal: NonTerminal, memo: Set<NonTerminal>): boolean {
+    private nullableImpl(nonTerminal: NonTerminal, memo: Set<NonTerminal>): boolean {
         const production = this.ProductionMap.get(nonTerminal)!;
         const singleSet = this.ProductionSingleSetMap.get(production)!;
         let nullable = true;
@@ -107,7 +138,7 @@ export class Rules {
                 nullable = true;
                 for (let i = 0, len = symbols.length; i < len; i++) {
                     const symbol = symbols[i];
-                    if (!this.Nonterminals.has(symbol) || memo.has(symbol) || !this.nullableWithMemo(symbol, new Set([symbol, ...memo]))) {
+                    if (!this.Nonterminals.has(symbol) || memo.has(symbol) || !this.nullableImpl(symbol, new Set([symbol, ...memo]))) {
                         nullable = false;
                         break;
                     }

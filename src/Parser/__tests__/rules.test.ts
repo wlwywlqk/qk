@@ -175,5 +175,32 @@ Program -> Declarations Statements`;
         expect(nestedRules2.nullable('B')).toBeTruthy();
         expect(nestedRules2.nullable('C')).toBeTruthy();
     });
+
+    test('rules first', () => {
+        const rule1 = new Rules(`
+            A -> B 0
+                | 1
+                | 2
+                | 3
+            B -> ε
+                | 4
+        `);
+        expect(rule1.first('A')).toEqual(new Set(['0', '1', '2', '3', '4', 'ε']));
+        expect(rule1.first('B')).toEqual(new Set(['ε', '4']));
+
+        const rule2 = new Rules(`
+            A -> 1
+                | B 2
+            B -> C 3
+                | 4
+            C -> A
+                | ε
+        `);
+
+        expect(rule2.first('A')).toEqual(new Set(['1', '3', '4', 'ε']));
+        expect(rule2.first('B')).toEqual(new Set(['1', '3', '4', 'ε']));
+        expect(rule2.first('C')).toEqual(new Set(['1', '3', '4', 'ε']));
+
+    });
  
 });
