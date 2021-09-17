@@ -16,3 +16,15 @@ export function isNumber(char: string) {
     const charCode = char.charCodeAt(0);
     return charCode >= CharCodeAt_0 && charCode <= CharCodeAt_9;
 }
+
+export function mergeSet(set1: Set<unknown>, set2: Set<unknown>) {
+    let changed = false;
+    if (set1 === set2) return changed;
+    for (const value of set2) {
+        if (!set1.has(value)) {
+            changed = true;
+        }
+        set1.add(value);
+    }
+    return changed;
+}

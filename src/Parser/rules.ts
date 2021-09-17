@@ -1,4 +1,4 @@
-import { isNumber, isLetter } from '../utils';
+import { isLetter, mergeSet } from '../utils';
 import { ParserRuleError } from './error';
 
 
@@ -66,6 +66,8 @@ export class Rules {
             }
         }
         this.enhanceProductions();
+
+        this.collectFollow();
 
         this.collectItems();
     }
@@ -157,11 +159,59 @@ export class Rules {
     }
 
     public follow(nonTerminal: NonTerminal): Set<Terminal> {
-        if (this.FollowMap.has(nonTerminal)) {
-            return this.FollowMap.get(nonTerminal)!;
-        }
+        return this.FollowMap.get(nonTerminal)!;
     }
 
+    private collectFollow() {
+        for (let i = 0, len = this.productions.length; i < len; i++) {
+            this.FollowMap.set(this.productions[i].left, new Set());
+        }
+        const rootProduction = this.productions[0];
+        const rootFollowSet = this.FollowMap.get(rootProduction.left)!;
+        rootFollowSet.add(END);
+
+        let changed = true;
+
+        while (changed) {
+            changed = false;
+            for (const single of this.ProductionRightSingleSet) {
+                let followSets: Set<Terminal>[] = [];
+                for (let i = 0, len = single.symbols.length; i < len; i++) {
+                    const symbol = single.symbols[i];
+    
+                    if (this.Nonterminals.has(symbol)) {
+                        const firstSet = this.first(symbol);
+                        const followSet = this.FollowMap.get(symbol)!;
+                        for (let j = 0, jLen = followSets.length; j < jLen; j++) {
+                            changed ||= mergeSet(followSets[j], firstSet);
+                        }
+    
+                        if (this.nullable(symbol)) {
+                            followSets.push(followSet);
+                        } else {
+                            followSets = [followSet];
+                        }
+    
+                        if (i === len - 1) {
+                            for (let j = 0, jLen = followSets.length; j < jLen; j++) {
+                                changed ||= mergeSet(followSets[j], this.FollowMap.get(single.production!.left)!);
+                            }
+                        }
+                    } else if (followSets.length > 0) {
+                        for (let j = 0, jLen = followSets.length; j < jLen; j++) {
+                            changed ||= !followSets[j].has(symbol);
+                            followSets[j].add(symbol);
+                        }
+                        followSets = [];
+                    }
+                }
+            }
+        }
+
+        for (let i = 0, len = this.productions.length; i < len; i++) {
+            this.FollowMap.get(this.productions[i].left)!.delete(NULL);
+        }
+    }
 
     private goto() {
 
@@ -174,17 +224,17 @@ export class Rules {
     // }
 
     private enhanceProductions(): void {
-        for (let i = 0, ilen = this.productions.length; i < ilen; i++) {
+        for (let i = 0, iLen = this.productions.length; i < iLen; i++) {
             const production = this.productions[i];
             const singleSet = new Set<ProductionRightSingle>();
             this.ProductionSingleSetMap.set(production, singleSet);
-            for (let j = 0, jlen = production.right.length; j < jlen; j++) {
+            for (let j = 0, jLen = production.right.length; j < jLen; j++) {
                 const right = production.right[j];
                 if (right instanceof ProductionRightSingle) {
                     right.production = production;
                     singleSet.add(right);
                 } else {
-                    for (let k = 0, klen = right.items.length; k < klen; k++) {
+                    for (let k = 0, kLen = right.items.length; k < kLen; k++) {
                         const item = right.items[k];
                         item.production = production;
                         item.equal = right;
