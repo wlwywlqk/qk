@@ -31,7 +31,7 @@ export enum Action {
 }
 
 export const END = '$';
-export const NULL = 'ε';
+export const EPSILON = 'ε';
 
 
 
@@ -65,6 +65,7 @@ export class Rules {
                 this.Nonterminals.add(picked.left);
             }
         }
+
         this.enhanceProductions();
 
         this.collectFollow();
@@ -136,7 +137,7 @@ export class Rules {
         const singleSet = this.ProductionSingleSetMap.get(production)!;
         let nullable = true;
         for (const single of singleSet) {
-            if (single.symbols.length === 1 && single.symbols[0] === NULL) {
+            if (single.symbols.length === 1 && single.symbols[0] === EPSILON) {
                 nullable = true;
                 break;
             } else {
@@ -171,7 +172,6 @@ export class Rules {
         rootFollowSet.add(END);
 
         let changed = true;
-
         while (changed) {
             changed = false;
             for (const single of this.ProductionRightSingleSet) {
@@ -209,7 +209,7 @@ export class Rules {
         }
 
         for (let i = 0, len = this.productions.length; i < len; i++) {
-            this.FollowMap.get(this.productions[i].left)!.delete(NULL);
+            this.FollowMap.get(this.productions[i].left)!.delete(EPSILON);
         }
     }
 

@@ -23,8 +23,8 @@ export function mergeSet(set1: Set<unknown>, set2: Set<unknown>) {
     for (const value of set2) {
         if (!set1.has(value)) {
             changed = true;
+            set1.add(value);
         }
-        set1.add(value);
     }
     return changed;
 }

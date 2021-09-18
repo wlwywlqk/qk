@@ -1,4 +1,4 @@
-import { Rules, Production, ProductionLeft, ProductionRight, ProductionRightSingle, ProductionRightEqual, END, NULL } from '../rules';
+import { Rules, Production, ProductionLeft, ProductionRight, ProductionRightSingle, ProductionRightEqual, END, EPSILON } from '../rules';
 describe('rules', () => {
     test('sample single rules', () => {
         const rulesStr = `Program -> Declarations Statements`;
@@ -223,6 +223,17 @@ Program -> Declarations Statements`;
         `);
         expect(rule2.follow('A')).toEqual(new Set([END, '0', '1']));
         expect(rule2.follow('B')).toEqual(new Set([END, '0', '1']));
+
+
+        const rule3 = new Rules(`
+            A -> A B C
+            B -> ε
+            C -> 3
+                | 4
+        `);
+        expect(rule3.follow('A')).toEqual(new Set([END, '3', '4']));
+        expect(rule3.follow('B')).toEqual(new Set(['3', '4']));
+        expect(rule3.follow('C')).toEqual(new Set([END, '3', '4']));
     });
  
 });
