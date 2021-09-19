@@ -49,14 +49,14 @@ export class Rules {
     private ProductionItemMap = new WeakMap<ProductionRightSingle, ProductionItem[]>();
 
     private ProductionItemCoreSets: Set<ProductionItem>[] = [];
-    private ProductionItemClosureMap = new WeakMap<Set<ProductionItem>, Set<ProductionItem>>();
+    private ClosureMap = new WeakMap<Set<ProductionItem>, Set<ProductionItem>>();
 
     private NullableMap = new Map<NonTerminal, boolean>();
     private FirstMap = new Map<NonTerminal, Set<Terminal>>();
     private FollowMap = new Map<NonTerminal, Set<Terminal>>();
 
     constructor(public readonly rules: string) {
-        this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n').trimStart();
+        this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n').trim();
         const len = this.rules.length;
         while (this.i < len) {
             const picked = this.pickProduction();
@@ -83,6 +83,14 @@ export class Rules {
 
         // const rootClosure = this.closure(rootItemCoreSet);
 
+    }
+
+    public closure(set: Set<ProductionItem>): Set<ProductionItem> {
+        if (this.ClosureMap.has(set)) {
+            return this.ClosureMap.get(set)!;
+        }
+        const result = new Set<ProductionItem>();
+        return result;
     }
 
     public first(nonTerminal: NonTerminal): Set<Terminal> {
