@@ -49,14 +49,14 @@ export class Rules {
     private ProductionItemMap = new WeakMap<ProductionRightSingle, ProductionItem[]>();
 
     private ProductionItemCoreSets: Set<ProductionItem>[] = [];
-    private ProductionItemClosureMap = new WeakMap<Set<ProductionItem>, Set<ProductionItem>>();
+    private ClosureMap = new WeakMap<Set<ProductionItem>, Set<ProductionItem>>();
 
     private NullableMap = new Map<NonTerminal, boolean>();
     private FirstMap = new Map<NonTerminal, Set<Terminal>>();
     private FollowMap = new Map<NonTerminal, Set<Terminal>>();
 
     constructor(public readonly rules: string) {
-        this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n').trimStart();
+        this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n').trim();
         const len = this.rules.length;
         while (this.i < len) {
             const picked = this.pickProduction();
@@ -73,17 +73,35 @@ export class Rules {
         this.collectItems();
     }
 
+    public isNonterminal(symbol: NonTerminal | Terminal) {
+        return this.Nonterminals.has(symbol);
+    }
+
     private collectItems() {
         for (const item of this.ProductionRightSingleSet) {
             this.ProductionItemMap.set(item, Array.from(Array(item.symbols.length + 1)).map((_, index) => new ProductionItem(item, index)));
         }
 
-        // const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
-        // const rootItemCoreSet = new Set([rootItem]);
-        // this.ProductionItemCoreSets.push(rootItemCoreSet);
 
-        // const rootClosure = this.closure(rootItemCoreSet);
+        const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
+        rootItem.lookaheads.add(END);
+    }
 
+    public closure(set: Set<ProductionItem>): Set<ProductionItem> {
+        if (this.ClosureMap.has(set)) {
+            return this.ClosureMap.get(set)!;
+        }
+        const result = new Set<ProductionItem>();
+
+        for (const item of set) {
+            const symbol = item.ref.symbols[item.index];
+            if (this.isNonterminal(symbol)) {
+                mergeSet(result, )
+            } else {
+                break;
+            }
+        }
+        return result;
     }
 
     public first(nonTerminal: NonTerminal): Set<Terminal> {
@@ -105,7 +123,7 @@ export class Rules {
             const { symbols } = single;
             for (let i = 0, len = symbols.length; i < len; i++) {
                 const symbol = symbols[i];
-                if (!this.Nonterminals.has(symbol)) {
+                if (!this.isNonterminal(symbol)) {
                     firstSet.add(symbol);
                     break;
                 } else {
@@ -145,7 +163,7 @@ export class Rules {
                 nullable = true;
                 for (let i = 0, len = symbols.length; i < len; i++) {
                     const symbol = symbols[i];
-                    if (!this.Nonterminals.has(symbol) || memo.has(symbol) || !this.nullableImpl(symbol, new Set([symbol, ...memo]))) {
+                    if (!this.isNonterminal(symbol) || memo.has(symbol) || !this.nullableImpl(symbol, new Set([symbol, ...memo]))) {
                         nullable = false;
                         break;
                     }
@@ -179,7 +197,7 @@ export class Rules {
                 for (let i = 0, len = single.symbols.length; i < len; i++) {
                     const symbol = single.symbols[i];
     
-                    if (this.Nonterminals.has(symbol)) {
+                    if (this.isNonterminal(symbol)) {
                         const firstSet = this.first(symbol);
                         const followSet = this.FollowMap.get(symbol)!;
                         for (let j = 0, jLen = followSets.length; j < jLen; j++) {

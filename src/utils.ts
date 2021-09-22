@@ -17,14 +17,19 @@ export function isNumber(char: string) {
     return charCode >= CharCodeAt_0 && charCode <= CharCodeAt_9;
 }
 
-export function mergeSet(set1: Set<unknown>, set2: Set<unknown>) {
+export function mergeSet(set1: Set<unknown>, ...rest: Set<unknown>[]) {
     let changed = false;
-    if (set1 === set2) return changed;
-    for (const value of set2) {
-        if (!set1.has(value)) {
-            changed = true;
+
+    for (let i = 0, len = rest.length; i < len; i++) {
+        const set2 = rest[i];
+        if (set1 === set2) continue;
+        for (const value of set2) {
+            if (!set1.has(value)) {
+                changed = true;
+            }
             set1.add(value);
         }
     }
+    
     return changed;
 }
