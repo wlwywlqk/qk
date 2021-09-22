@@ -19,8 +19,9 @@ export class Production {
     constructor(public left: ProductionLeft = '', public right: ProductionRight[] = []) { }
 }
 
+export type Lookaheads = Set<Terminal>;
 export class ProductionItem {
-    constructor(public ref: ProductionRightSingle, public index: number = 0, public lookaheads: Set<Terminal> = new Set()) { }
+    constructor(public ref: ProductionRightSingle, public index: number = 0) { }
 }
 
 export enum Action {
@@ -81,22 +82,22 @@ export class Rules {
         for (const item of this.ProductionRightSingleSet) {
             this.ProductionItemMap.set(item, Array.from(Array(item.symbols.length + 1)).map((_, index) => new ProductionItem(item, index)));
         }
-
-
-        const rootItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
-        rootItem.lookaheads.add(END);
     }
 
     public closure(set: Set<ProductionItem>): Set<ProductionItem> {
         if (this.ClosureMap.has(set)) {
             return this.ClosureMap.get(set)!;
         }
-        const result = new Set<ProductionItem>();
+        const result = new Set<ProductionItem>(set);
 
-        for (const item of set) {
+        for (const item of result) {
             const symbol = item.ref.symbols[item.index];
             if (this.isNonterminal(symbol)) {
-                mergeSet(result, )
+                const set = new Set<ProductionItem>();
+                const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
+                for (const single of singleSet) {
+                    result.add(this.ProductionItemMap.get(single)![0]);
+                }
             } else {
                 break;
             }
@@ -234,12 +235,6 @@ export class Rules {
     private goto() {
 
     }
-
-    // private closure(set: Set<ProductionItem>): Set<ProductionItem> {
-    //     if (this.ProductionItemClosureMap.has(set)) {
-    //         return this.ProductionItemClosureMap.get(set)!;
-    //     }
-    // }
 
     private enhanceProductions(): void {
         for (let i = 0, iLen = this.productions.length; i < iLen; i++) {

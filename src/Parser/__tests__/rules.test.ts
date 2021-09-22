@@ -1,4 +1,4 @@
-import { Rules, Production, ProductionLeft, ProductionRight, ProductionRightSingle, ProductionRightEqual, END, EPSILON } from '../rules';
+import { Rules, Production, ProductionLeft, ProductionRight, ProductionRightSingle, ProductionRightEqual, ProductionItem, END, EPSILON } from '../rules';
 describe('rules', () => {
     test('sample single rules', () => {
         const rulesStr = `Program -> Declarations Statements`;
@@ -235,5 +235,43 @@ Program -> Declarations Statements`;
         expect(rule3.follow('B')).toEqual(new Set(['3', '4']));
         expect(rule3.follow('C')).toEqual(new Set([END, '3', '4']));
     });
- 
+
+
+    test('rules closure', () => {
+        const rule1 = new Rules(`
+            SS -> S
+            S -> C C
+            C -> c C 
+                | d
+        `);
+        expect(rule1.closure(new Set([]))).toEqual(new Set([]));
+        const item1 = new ProductionItem(rule1.productions[0].right[0] as ProductionRightSingle, 0);
+        expect(rule1.closure(new Set([item1]))).toEqual(new Set([
+            new ProductionItem(rule1.productions[0].right[0] as ProductionRightSingle, 0),
+            new ProductionItem(rule1.productions[1].right[0] as ProductionRightSingle, 0),
+            new ProductionItem(rule1.productions[2].right[0] as ProductionRightSingle, 0),
+            new ProductionItem(rule1.productions[2].right[1] as ProductionRightSingle, 0)
+        ]));
+        const item2 = new ProductionItem(rule1.productions[1].right[0] as ProductionRightSingle, 1);
+
+        expect(rule1.closure(new Set([item2]))).toEqual(new Set([
+            new ProductionItem(rule1.productions[1].right[0] as ProductionRightSingle, 1),
+            new ProductionItem(rule1.productions[2].right[0] as ProductionRightSingle, 0),
+            new ProductionItem(rule1.productions[2].right[1] as ProductionRightSingle, 0)
+        ]));
+
+        const item3 = new ProductionItem(rule1.productions[2].right[0] as ProductionRightSingle, 1);
+
+        expect(rule1.closure(new Set([item3]))).toEqual(new Set([
+            new ProductionItem(rule1.productions[2].right[0] as ProductionRightSingle, 1),
+            new ProductionItem(rule1.productions[2].right[0] as ProductionRightSingle, 0),
+            new ProductionItem(rule1.productions[2].right[1] as ProductionRightSingle, 0)
+        ]));
+
+        const item4 = new ProductionItem(rule1.productions[2].right[1] as ProductionRightSingle, 0);
+
+        expect(rule1.closure(new Set([item4]))).toEqual(new Set([
+            new ProductionItem(rule1.productions[2].right[1] as ProductionRightSingle, 0),
+        ]));
+    });
 });
