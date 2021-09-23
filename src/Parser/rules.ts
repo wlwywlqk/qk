@@ -89,7 +89,7 @@ export class Rules {
     }
 
     public goto(set: Set<ProductionItem>, symbol: NonTerminal | Terminal): Set<ProductionItem> {
-        if (this.GotoMap.has(set) && this.GotoMap.has(set)) {
+        if (this.GotoMap.has(set) && this.GotoMap.get(set)!.has(symbol)) {
             return this.GotoMap.get(set)!.get(symbol)!;
         }
         const newSet = new Set<ProductionItem>();
