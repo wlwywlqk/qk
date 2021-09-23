@@ -49,12 +49,16 @@ export class Rules {
     private ProductionRightSingleSet = new Set<ProductionRightSingle>();
     private ProductionItemMap = new WeakMap<ProductionRightSingle, ProductionItem[]>();
 
-    private ProductionItemCoreSets: Set<ProductionItem>[] = [];
+    public CoreSets: Set<ProductionItem>[] = [];
+    
     private ClosureMap = new WeakMap<Set<ProductionItem>, Set<ProductionItem>>();
+    private GotoMap = new WeakMap<Set<ProductionItem>, Map<NonTerminal | Terminal, Set<ProductionItem>>>();
+
 
     private NullableMap = new Map<NonTerminal, boolean>();
     private FirstMap = new Map<NonTerminal, Set<Terminal>>();
     private FollowMap = new Map<NonTerminal, Set<Terminal>>();
+
 
     constructor(public readonly rules: string) {
         this.rules = rules.replace(/\r/mg, '\n').replace(/\n\n/mg, '\n').trim();
@@ -82,6 +86,25 @@ export class Rules {
         for (const item of this.ProductionRightSingleSet) {
             this.ProductionItemMap.set(item, Array.from(Array(item.symbols.length + 1)).map((_, index) => new ProductionItem(item, index)));
         }
+    }
+
+    public goto(set: Set<ProductionItem>, symbol: NonTerminal | Terminal): Set<ProductionItem> {
+        if (this.GotoMap.has(set) && this.GotoMap.has(set)) {
+            return this.GotoMap.get(set)!.get(symbol)!;
+        }
+        const newSet = new Set<ProductionItem>();
+        for (const item of set) {
+            if (item.ref.symbols[item.index] === symbol) {
+                newSet.add(this.ProductionItemMap.get(item.ref)![item.index + 1]);
+            }
+        }
+        const result = this.closure(newSet);
+        if (!this.GotoMap.has(set)) {
+            this.GotoMap.set(set, new Map([[symbol, result ]]));
+        } else {
+            this.GotoMap.get(set)!.set(symbol, result);
+        }
+        return result;
     }
 
     public closure(set: Set<ProductionItem>): Set<ProductionItem> {
@@ -230,10 +253,6 @@ export class Rules {
         for (let i = 0, len = this.productions.length; i < len; i++) {
             this.FollowMap.get(this.productions[i].left)!.delete(EPSILON);
         }
-    }
-
-    private goto() {
-
     }
 
     private enhanceProductions(): void {
