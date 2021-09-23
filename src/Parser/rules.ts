@@ -1,4 +1,4 @@
-import { isLetter, mergeSet } from '../utils';
+import { isLetter, mergeSet, equalSet } from '../utils';
 import { ParserRuleError } from './error';
 
 
@@ -20,7 +20,7 @@ export class Production {
 }
 
 export type Lookaheads = Set<Terminal>;
-export class ProductionItem {
+export class Item {
     constructor(public ref: ProductionRightSingle, public index: number = 0) { }
 }
 
@@ -43,19 +43,17 @@ export class Rules {
     public col = 0;
     public Nonterminals = new Set<NonTerminal>();
     public rootProduction: Production | null = null;
-    public rootProductionItem: ProductionItem | null = null;
+    public rootItem: Item | null = null;
+    public CoreSets: Set<Item>[] = [];
 
     private i = 0;
 
     private ProductionSingleSetMap = new WeakMap<Production, Set<ProductionRightSingle>>();
     private ProductionRightSingleSet = new Set<ProductionRightSingle>();
-    private ProductionItemMap = new WeakMap<ProductionRightSingle, ProductionItem[]>();
 
-    public CoreSets: Set<ProductionItem>[] = [];
-    
-    private ClosureMap = new WeakMap<Set<ProductionItem>, Set<ProductionItem>>();
-    private GotoMap = new WeakMap<Set<ProductionItem>, Map<NonTerminal | Terminal, Set<ProductionItem>>>();
-
+    private ItemMap = new WeakMap<ProductionRightSingle, Item[]>();
+    private ClosureMap = new WeakMap<Set<Item>, Set<Item>>();
+    private GotoMap = new WeakMap<Set<Item>, Map<NonTerminal | Terminal, Set<Item>>>();
 
     private NullableMap = new Map<NonTerminal, boolean>();
     private FirstMap = new Map<NonTerminal, Set<Terminal>>();
@@ -92,19 +90,41 @@ export class Rules {
 
     private collectItems() {
         for (const single of this.ProductionRightSingleSet) {
-            this.ProductionItemMap.set(single, Array.from(Array(single.symbols.length + 1)).map((_, index) => new ProductionItem(single, index)));
+            this.ItemMap.set(single, Array.from(Array(single.symbols.length + 1)).map((_, index) => new Item(single, index)));
         }
-        this.rootProductionItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
+        this.rootItem = this.ItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
+
+        this.CoreSets.push(new Set([this.rootItem]));
+
+        for (let i = 0, len = this.CoreSets.length; i < len; i++) {
+            const closure = this.closure(this.CoreSets[i]);
+            const used = new Set<NonTerminal | Terminal>();
+
+            for (const item of closure) {
+                const symbol = item.ref.symbols[item.index];
+                if (!used.has(symbol)) {
+                    used.add(symbol);
+
+                    const gotoClosure = this.goto(closure, symbol);
+
+                }
+            }
+        }
     }
 
-    public goto(set: Set<ProductionItem>, symbol: NonTerminal | Terminal): Set<ProductionItem> {
+    private getCoreFromClosure(closure: Set<Item>) {
+        
+    }
+
+
+    public goto(set: Set<Item>, symbol: NonTerminal | Terminal): Set<Item> {
         if (this.GotoMap.has(set) && this.GotoMap.get(set)!.has(symbol)) {
             return this.GotoMap.get(set)!.get(symbol)!;
         }
-        const newSet = new Set<ProductionItem>();
+        const newSet = new Set<Item>();
         for (const item of set) {
             if (item.ref.symbols[item.index] === symbol) {
-                newSet.add(this.ProductionItemMap.get(item.ref)![item.index + 1]);
+                newSet.add(this.ItemMap.get(item.ref)![item.index + 1]);
             }
         }
         const result = this.closure(newSet);
@@ -116,19 +136,19 @@ export class Rules {
         return result;
     }
 
-    public closure(set: Set<ProductionItem>): Set<ProductionItem> {
+    public closure(set: Set<Item>): Set<Item> {
         if (this.ClosureMap.has(set)) {
             return this.ClosureMap.get(set)!;
         }
-        const result = new Set<ProductionItem>(set);
+        const result = new Set<Item>(set);
 
         for (const item of result) {
             const symbol = item.ref.symbols[item.index];
             if (this.isNonterminal(symbol)) {
-                const set = new Set<ProductionItem>();
+                const set = new Set<Item>();
                 const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
                 for (const single of singleSet) {
-                    result.add(this.ProductionItemMap.get(single)![0]);
+                    result.add(this.ItemMap.get(single)![0]);
                 }
             } else {
                 break;

@@ -33,3 +33,15 @@ export function mergeSet(set1: Set<unknown>, ...rest: Set<unknown>[]) {
     
     return changed;
 }
+
+export function equalSet(set1: Set<unknown>, set2: Set<unknown>) {
+    if (set1.size === set2.size) {
+        for (const item of set1) {
+            if (!set2.has(item)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
