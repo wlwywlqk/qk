@@ -1,4 +1,3 @@
-Qk -> Program  # console.log('accept!');
 Program ->  Declarations Statements        # console.log(111); 
 Declarations -> Declarations Declaration
     | ε

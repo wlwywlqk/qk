@@ -42,6 +42,8 @@ export class Rules {
     public line = 1;
     public col = 0;
     public Nonterminals = new Set<NonTerminal>();
+    public rootProduction: Production | null = null;
+    public rootProductionItem: ProductionItem | null = null;
 
     private i = 0;
 
@@ -70,11 +72,17 @@ export class Rules {
                 this.Nonterminals.add(picked.left);
             }
         }
-
+        if (this.productions[0].left !== 'Qk') {
+            const rootProduction =  new Production('Qk', [new ProductionRightSingle([this.productions[0].left])]);
+            this.ProductionMap.set('Qk', rootProduction);
+            this.ProductionRightSingleSet.add(rootProduction.right[0] as ProductionRightSingle);
+            this.productions.unshift(rootProduction);
+            this.rootProduction = rootProduction;
+        }
+        
         this.enhanceProductions();
 
         this.collectFollow();
-
         this.collectItems();
     }
 
@@ -83,9 +91,10 @@ export class Rules {
     }
 
     private collectItems() {
-        for (const item of this.ProductionRightSingleSet) {
-            this.ProductionItemMap.set(item, Array.from(Array(item.symbols.length + 1)).map((_, index) => new ProductionItem(item, index)));
+        for (const single of this.ProductionRightSingleSet) {
+            this.ProductionItemMap.set(single, Array.from(Array(single.symbols.length + 1)).map((_, index) => new ProductionItem(single, index)));
         }
+        this.rootProductionItem = this.ProductionItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
     }
 
     public goto(set: Set<ProductionItem>, symbol: NonTerminal | Terminal): Set<ProductionItem> {
@@ -125,6 +134,8 @@ export class Rules {
                 break;
             }
         }
+
+        this.ClosureMap.set(set, result);
         return result;
     }
 
