@@ -51,7 +51,7 @@ export class Rules {
     private ProductionSingleSetMap = new WeakMap<Production, Set<ProductionRightSingle>>();
     private ProductionRightSingleSet = new Set<ProductionRightSingle>();
 
-    private ItemMap = new WeakMap<ProductionRightSingle, Item[]>();
+    private ItemsMap = new WeakMap<ProductionRightSingle, Item[]>();
     private ClosureMap = new WeakMap<Set<Item>, Set<Item>>();
     private GotoMap = new WeakMap<Set<Item>, Map<NonTerminal | Terminal, Set<Item>>>();
 
@@ -90,9 +90,9 @@ export class Rules {
 
     private collectItems() {
         for (const single of this.ProductionRightSingleSet) {
-            this.ItemMap.set(single, Array.from(Array(single.symbols.length + 1)).map((_, index) => new Item(single, index)));
+            this.ItemsMap.set(single, Array.from(Array(single.symbols.length + 1)).map((_, index) => new Item(single, index)));
         }
-        this.rootItem = this.ItemMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
+        this.rootItem = this.ItemsMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
 
         this.CoreSets.push(new Set([this.rootItem]));
 
@@ -102,18 +102,28 @@ export class Rules {
 
             for (const item of closure) {
                 const symbol = item.ref.symbols[item.index];
-                if (!used.has(symbol)) {
+                if (symbol && !used.has(symbol)) {
                     used.add(symbol);
 
                     const gotoClosure = this.goto(closure, symbol);
+                    const gotoCore = this.getCoreFromClosure(gotoClosure);
 
+                    if (this.CoreSets.every((core) => !equalSet(core, gotoCore))) {
+                        this.CoreSets.push(gotoCore);
+                    }
                 }
             }
         }
     }
 
-    private getCoreFromClosure(closure: Set<Item>) {
-        
+    private getCoreFromClosure(closure: Set<Item>): Set<Item> {
+        const result = new Set<Item>();
+        for (const item of closure) {
+            if (item.index !== 0 || item === this.rootItem) {
+                result.add(item);
+            }
+        }
+        return result;
     }
 
 
@@ -124,7 +134,7 @@ export class Rules {
         const newSet = new Set<Item>();
         for (const item of set) {
             if (item.ref.symbols[item.index] === symbol) {
-                newSet.add(this.ItemMap.get(item.ref)![item.index + 1]);
+                newSet.add(this.ItemsMap.get(item.ref)![item.index + 1]);
             }
         }
         const result = this.closure(newSet);
@@ -145,10 +155,9 @@ export class Rules {
         for (const item of result) {
             const symbol = item.ref.symbols[item.index];
             if (this.isNonterminal(symbol)) {
-                const set = new Set<Item>();
                 const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
                 for (const single of singleSet) {
-                    result.add(this.ItemMap.get(single)![0]);
+                    result.add(this.ItemsMap.get(single)![0]);
                 }
             } else {
                 break;
