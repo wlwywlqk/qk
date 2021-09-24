@@ -6,9 +6,15 @@ export type Terminal = string;
 export type NonTerminal = string;
 export class ProductionRightSingle {
     constructor(public symbols: string[] = [], public code: string = '', public production: Production | null = null, public equal: ProductionRightEqual | null = null) { }
+    public toString() {
+        return this.symbols.join(' ');
+    }
 }
 export class ProductionRightEqual {
     constructor(public items: ProductionRightSingle[] = [], public left: boolean = true) { }
+    public toString() {
+        return `${this.items.map((item) => `${item}`).join(this.left ? '\n\t|= ' : '\n\t=| ')}`;
+    }
 }
 
 export type ProductionLeft = NonTerminal;
@@ -17,11 +23,19 @@ export type ProductionRight = ProductionRightSingle | ProductionRightEqual;
 
 export class Production {
     constructor(public left: ProductionLeft = '', public right: ProductionRight[] = []) { }
+    public toString() {
+        return `${this.left} -> ${this.right.map(item => `${item}`).join('\n\t| ')}`;
+    }
 }
 
 export type Lookaheads = Set<Terminal>;
 export class Item {
     constructor(public ref: ProductionRightSingle, public index: number = 0) { }
+    public toString() {
+        const symbols = [...this.ref.symbols];
+        symbols.splice(this.index, 0, '·')
+        return `${this.ref.production!.left} -> ${symbols.join(' ')}`;
+    }
 }
 
 export enum Action {
@@ -54,6 +68,7 @@ export class Rules {
     private ItemsMap = new WeakMap<ProductionRightSingle, Item[]>();
     private ClosureMap = new WeakMap<Set<Item>, Set<Item>>();
     private GotoMap = new WeakMap<Set<Item>, Map<NonTerminal | Terminal, Set<Item>>>();
+    private LookaheadsMap = new WeakMap<Item, Set<NonTerminal | Terminal>>();
 
     private NullableMap = new Map<NonTerminal, boolean>();
     private FirstMap = new Map<NonTerminal, Set<Terminal>>();
@@ -96,7 +111,7 @@ export class Rules {
 
         this.CoreSets.push(new Set([this.rootItem]));
 
-        for (let i = 0, len = this.CoreSets.length; i < len; i++) {
+        for (let i = 0; i < this.CoreSets.length; i++) {
             const closure = this.closure(this.CoreSets[i]);
             const used = new Set<NonTerminal | Terminal>();
 
@@ -123,6 +138,7 @@ export class Rules {
                 result.add(item);
             }
         }
+        this.ClosureMap.set(result, this.closure(closure));
         return result;
     }
 

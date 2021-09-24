@@ -17,7 +17,7 @@ export function isNumber(char: string) {
     return charCode >= CharCodeAt_0 && charCode <= CharCodeAt_9;
 }
 
-export function mergeSet(set1: Set<unknown>, ...rest: Set<unknown>[]) {
+export function mergeSet(set1: Set<unknown>, ...rest: Set<unknown>[]): boolean {
     let changed = false;
 
     for (let i = 0, len = rest.length; i < len; i++) {
@@ -26,15 +26,15 @@ export function mergeSet(set1: Set<unknown>, ...rest: Set<unknown>[]) {
         for (const value of set2) {
             if (!set1.has(value)) {
                 changed = true;
+                set1.add(value);
             }
-            set1.add(value);
         }
     }
     
     return changed;
 }
 
-export function equalSet(set1: Set<unknown>, set2: Set<unknown>) {
+export function equalSet(set1: Set<unknown>, set2: Set<unknown>): boolean {
     if (set1.size === set2.size) {
         for (const item of set1) {
             if (!set2.has(item)) {

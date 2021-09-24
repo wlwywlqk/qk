@@ -328,6 +328,46 @@ Program -> Declarations Statements`;
     });
 
     test('rules collect items', () => {
+        const rule1 = new Rules(`
+            S -> L = R
+                | R
+            L -> * R
+                | id
+            R -> L
+        `);
+        expect(rule1.CoreSets).toEqual([
+            new Set([
+                new Item(rule1.productions[0].right[0] as ProductionRightSingle, 0),
+            ]),
+            new Set([
+                new Item(rule1.productions[0].right[0] as ProductionRightSingle, 1),
+            ]),
+            new Set([
+                new Item(rule1.productions[1].right[0] as ProductionRightSingle, 1),
+                new Item(rule1.productions[3].right[0] as ProductionRightSingle, 1),
+            ]),
+            new Set([
+                new Item(rule1.productions[1].right[1] as ProductionRightSingle, 1),
+            ]),
+            new Set([
+                new Item(rule1.productions[2].right[0] as ProductionRightSingle, 1),
+            ]),
+            new Set([
+                new Item(rule1.productions[2].right[1] as ProductionRightSingle, 1),
+            ]),
+            new Set([
+                new Item(rule1.productions[1].right[0] as ProductionRightSingle, 2),
+            ]),
+            new Set([
+                new Item(rule1.productions[2].right[0] as ProductionRightSingle, 2),
+            ]),
+            new Set([
+                new Item(rule1.productions[3].right[0] as ProductionRightSingle, 1),
+            ]),
+            new Set([
+                new Item(rule1.productions[1].right[0] as ProductionRightSingle, 3),
+            ]),
+        ]);
         
     });
 });
