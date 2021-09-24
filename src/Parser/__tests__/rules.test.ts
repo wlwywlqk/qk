@@ -186,8 +186,11 @@ Program -> Declarations Statements`;
             B -> ε
                 | 4
         `);
-        expect(rule1.first('A')).toEqual(new Set(['0', '1', '2', '3', '4', 'ε']));
-        expect(rule1.first('B')).toEqual(new Set(['ε', '4']));
+        expect(rule1.first('A')).toEqual(new Set(['0', '1', '2', '3', '4', EPSILON]));
+        expect(rule1.first('B')).toEqual(new Set([EPSILON, '4']));
+        
+        expect(rule1.firstOfSymbols(['B', 'A'])).toEqual(new Set(['0', '1', '2', '3', '4', EPSILON]));
+        expect(rule1.firstOfSymbols(['B', 'B', '5'])).toEqual(new Set(['4', '5', EPSILON]));
 
         const rule2 = new Rules(`
             A -> 1
@@ -198,9 +201,9 @@ Program -> Declarations Statements`;
                 | ε
         `);
 
-        expect(rule2.first('A')).toEqual(new Set(['1', '3', '4', 'ε']));
-        expect(rule2.first('B')).toEqual(new Set(['1', '3', '4', 'ε']));
-        expect(rule2.first('C')).toEqual(new Set(['1', '3', '4', 'ε']));
+        expect(rule2.first('A')).toEqual(new Set(['1', '3', '4', EPSILON]));
+        expect(rule2.first('B')).toEqual(new Set(['1', '3', '4', EPSILON]));
+        expect(rule2.first('C')).toEqual(new Set(['1', '3', '4', EPSILON]));
 
     });
 

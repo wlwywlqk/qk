@@ -97,10 +97,25 @@ export class Rules {
 
         this.collectFollow();
         this.collectItems();
+        // this.collectLookaheads();
     }
 
     public isNonterminal(symbol: NonTerminal | Terminal) {
         return this.Nonterminals.has(symbol);
+    }
+
+    private collectLookaheads() {
+        this.LookaheadsMap.set(this.rootItem!, new Set(END));
+        let changed = true;
+        while (changed) {
+            for (const core of this.CoreSets) {
+                const closure = this.closure(core);
+
+
+            } 
+
+        }
+
     }
 
     private collectItems() {
@@ -181,6 +196,24 @@ export class Rules {
         }
 
         this.ClosureMap.set(set, result);
+        return result;
+    }
+
+    public firstOfSymbols(symbols: NonTerminal[] | Terminal[]): Set<Terminal> {
+        const result = new Set<Terminal>();
+        for (let i = 0, len = symbols.length; i < len; i++) {
+            const symbol = symbols[i];
+
+            if (this.isNonterminal(symbol)) {
+                mergeSet(result, this.first(symbol));
+                if (!this.nullable(symbol)) {
+                    break;
+                }
+            } else {
+                result.add(symbol);
+                break;
+            }
+        }
         return result;
     }
 
