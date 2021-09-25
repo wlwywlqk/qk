@@ -373,4 +373,16 @@ Program -> Declarations Statements`;
         ]);
         
     });
+
+    test('rules collect lookaheads', () => {
+        const rule1 = new Rules(`
+            S -> L = R
+                | R
+            L -> * R
+                | id
+            R -> L
+        `);
+        rule1.collectLookaheads();
+        
+    });
 });

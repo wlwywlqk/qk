@@ -104,23 +104,65 @@ export class Rules {
         return this.Nonterminals.has(symbol);
     }
 
-    private collectLookaheads() {
+    public collectLookaheads() {
         this.LookaheadsMap.set(this.rootItem!, new Set(END));
         let changed = true;
         while (changed) {
+            changed = false;
             for (const core of this.CoreSets) {
-                const closure = this.closure(core);
+                const closure = new Set(core);
 
+                for (const item of closure) {
+                    const symbol = item.ref.symbols[item.index];
+                    if (!this.isNonterminal(symbol)) {
+                        break;
+                    }
+
+                    const lookaheads = this.firstOfSymbols(item.ref.symbols.slice(item.index + 1));
+                    if (lookaheads.has(EPSILON) || lookaheads.size === 0) {
+                        mergeSet(lookaheads, this.LookaheadsMap.get(item)!);
+                    }
+                    lookaheads.delete(EPSILON);
+                    const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
+                    for (const single of singleSet) {
+                        const subItem = this.ItemsMap.get(single)![0];
+                        changed = mergeSet(this.LookaheadsMap.get(subItem)!, lookaheads) || changed;
+                        closure.add(subItem);
+                    }
+                }
+
+
+                for (const item of closure) {
+                    if (item.index + 1 > item.ref.symbols.length) {
+                        break;
+                    }
+
+                    const nextItem = this.ItemsMap.get(item.ref)![item.index + 1];
+
+                    changed = mergeSet(this.LookaheadsMap.get(nextItem)!, this.LookaheadsMap.get(item)!) || changed;
+
+                }
 
             } 
 
         }
-
+        let str = ''
+        for (const core of this.CoreSets) {
+            str += `-------------------------------------\n`
+            for (const item of core) {
+                str += `${item}     [${[...this.LookaheadsMap.get(item)!]}]\n`
+            }
+        }
+        console.log(str)
     }
 
     private collectItems() {
         for (const single of this.ProductionRightSingleSet) {
-            this.ItemsMap.set(single, Array.from(Array(single.symbols.length + 1)).map((_, index) => new Item(single, index)));
+            this.ItemsMap.set(single, Array.from(Array(single.symbols.length + 1)).map((_, index) => {
+                const item = new Item(single, index);
+                this.LookaheadsMap.set(item, new Set());
+                return item;
+            }));
         }
         this.rootItem = this.ItemsMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
 
@@ -185,14 +227,14 @@ export class Rules {
 
         for (const item of result) {
             const symbol = item.ref.symbols[item.index];
-            if (this.isNonterminal(symbol)) {
-                const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
-                for (const single of singleSet) {
-                    result.add(this.ItemsMap.get(single)![0]);
-                }
-            } else {
+            if (!this.isNonterminal(symbol)) {
                 break;
             }
+            const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
+            for (const single of singleSet) {
+                result.add(this.ItemsMap.get(single)![0]);
+            }
+            
         }
 
         this.ClosureMap.set(set, result);
@@ -314,7 +356,7 @@ export class Rules {
                         const firstSet = this.first(symbol);
                         const followSet = this.FollowMap.get(symbol)!;
                         for (let j = 0, jLen = followSets.length; j < jLen; j++) {
-                            changed ||= mergeSet(followSets[j], firstSet);
+                            changed = mergeSet(followSets[j], firstSet) || changed;
                         }
     
                         if (this.nullable(symbol)) {
@@ -325,7 +367,7 @@ export class Rules {
     
                         if (i === len - 1) {
                             for (let j = 0, jLen = followSets.length; j < jLen; j++) {
-                                changed ||= mergeSet(followSets[j], this.FollowMap.get(single.production!.left)!);
+                                changed = mergeSet(followSets[j], this.FollowMap.get(single.production!.left)!) || changed;
                             }
                         }
                     } else if (followSets.length > 0) {
