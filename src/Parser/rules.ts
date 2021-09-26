@@ -38,6 +38,9 @@ export class Item {
     }
 }
 
+export type Kernel = Set<Item>;
+export type Closure = Set<Item>;
+
 export enum Action {
     SHIFT,
     REDUCE,
@@ -58,7 +61,7 @@ export class Rules {
     public Nonterminals = new Set<NonTerminal>();
     public rootProduction: Production | null = null;
     public rootItem: Item | null = null;
-    public CoreSets: Set<Item>[] = [];
+    public Kernels: Set<Item>[] = [];
 
     private i = 0;
 
@@ -66,9 +69,10 @@ export class Rules {
     private ProductionRightSingleSet = new Set<ProductionRightSingle>();
 
     private ItemsMap = new WeakMap<ProductionRightSingle, Item[]>();
-    private ClosureMap = new WeakMap<Set<Item>, Set<Item>>();
-    private GotoMap = new WeakMap<Set<Item>, Map<NonTerminal | Terminal, Set<Item>>>();
-    private LookaheadsMap = new WeakMap<Item, Set<NonTerminal | Terminal>>();
+    private ClosureMap = new WeakMap<Closure, Set<Item>>();
+    private GotoMMap = new WeakMap<Set<Item>, Map<NonTerminal | Terminal, Set<Item>>>();
+    private LookaheadsMMap = new WeakMap<Kernel, WeakMap<Item, Set<NonTerminal | Terminal>>>();
+    private KernelMap = new WeakMap<Kernel, Closure>();
 
     private NullableMap = new Map<NonTerminal, boolean>();
     private FirstMap = new Map<NonTerminal, Set<Terminal>>();
@@ -97,22 +101,42 @@ export class Rules {
 
         this.collectFollow();
         this.collectItems();
-        // this.collectLookaheads();
+        this.collectLookaheads();
+    }
+
+    public toArray() {
+        const result = [];
+        for (let i = 0, len = this.Kernels.length; i < len; i++) {
+            const kernel = this.Kernels[i];
+            const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
+
+            const kernelArray = [];
+            for (const item of kernel) {
+                kernelArray.push([`${item}`, lookaheadsMap.get(item)]);
+            }
+
+            result.push(kernelArray);
+        }
+
+        return result;
     }
 
     public isNonterminal(symbol: NonTerminal | Terminal) {
         return this.Nonterminals.has(symbol);
     }
 
-    public collectLookaheads() {
-        this.LookaheadsMap.set(this.rootItem!, new Set(END));
+    private collectLookaheads() {
+        this.LookaheadsMMap.get(this.Kernels[0])!.get(this.rootItem!)!.add(END);
+
         let changed = true;
         while (changed) {
             changed = false;
-            for (const core of this.CoreSets) {
-                const closure = new Set(core);
+            for (const kernel of this.Kernels) {
+                const itemSet = new Set(kernel);
+                const closure = this.closure(kernel);
+                const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
 
-                for (const item of closure) {
+                for (const item of itemSet) {
                     const symbol = item.ref.symbols[item.index];
                     if (!this.isNonterminal(symbol)) {
                         break;
@@ -120,101 +144,120 @@ export class Rules {
 
                     const lookaheads = this.firstOfSymbols(item.ref.symbols.slice(item.index + 1));
                     if (lookaheads.has(EPSILON) || lookaheads.size === 0) {
-                        mergeSet(lookaheads, this.LookaheadsMap.get(item)!);
+                        mergeSet(lookaheads, lookaheadsMap.get(item)!);
                     }
                     lookaheads.delete(EPSILON);
                     const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
                     for (const single of singleSet) {
                         const subItem = this.ItemsMap.get(single)![0];
-                        changed = mergeSet(this.LookaheadsMap.get(subItem)!, lookaheads) || changed;
-                        closure.add(subItem);
+                        changed = mergeSet(lookaheadsMap.get(subItem)!, lookaheads) || changed;
+                        itemSet.add(subItem);
                     }
                 }
 
-
+                const used = new Set<NonTerminal | Terminal>();
                 for (const item of closure) {
-                    if (item.index + 1 > item.ref.symbols.length) {
-                        break;
+                    const symbol = item.ref.symbols[item.index];
+                    if (symbol && !used.has(symbol)) {
+                        used.add(symbol);
+                        const gotoKernel = this.goto(kernel, symbol);
+                        
+                        const gotoClosure = this.closure(gotoKernel);
+                        const gotoLookaheadsMap = this.LookaheadsMMap.get(gotoKernel)!;
+                        if (!gotoLookaheadsMap) debugger;
+                        for (const gotoItem of gotoClosure) {
+                            changed = mergeSet(gotoLookaheadsMap.get(gotoItem)!, lookaheadsMap.get(item)!) || changed;
+                        }
                     }
-
-                    const nextItem = this.ItemsMap.get(item.ref)![item.index + 1];
-
-                    changed = mergeSet(this.LookaheadsMap.get(nextItem)!, this.LookaheadsMap.get(item)!) || changed;
-
                 }
-
-            } 
-
-        }
-        let str = ''
-        for (const core of this.CoreSets) {
-            str += `-------------------------------------\n`
-            for (const item of core) {
-                str += `${item}     [${[...this.LookaheadsMap.get(item)!]}]\n`
             }
+
         }
-        console.log(str)
     }
 
     private collectItems() {
         for (const single of this.ProductionRightSingleSet) {
             this.ItemsMap.set(single, Array.from(Array(single.symbols.length + 1)).map((_, index) => {
                 const item = new Item(single, index);
-                this.LookaheadsMap.set(item, new Set());
                 return item;
             }));
         }
         this.rootItem = this.ItemsMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
+        const rootKernel = new Set([this.rootItem])
+        this.Kernels.push(rootKernel);
+        const rootClosure = this.closure(rootKernel);
+        const lookaheadsMap = new WeakMap();
+        for (const item of rootClosure) {
+            lookaheadsMap.set(item, new Set());
+        }
+        this.LookaheadsMMap.set(rootKernel, lookaheadsMap);
 
-        this.CoreSets.push(new Set([this.rootItem]));
-
-        for (let i = 0; i < this.CoreSets.length; i++) {
-            const closure = this.closure(this.CoreSets[i]);
+        for (let i = 0; i < this.Kernels.length; i++) {
+            const kernel = this.Kernels[i];
+            const closure = this.closure(kernel);
             const used = new Set<NonTerminal | Terminal>();
-
+            
             for (const item of closure) {
+
                 const symbol = item.ref.symbols[item.index];
                 if (symbol && !used.has(symbol)) {
                     used.add(symbol);
 
-                    const gotoClosure = this.goto(closure, symbol);
-                    const gotoCore = this.getCoreFromClosure(gotoClosure);
-
-                    if (this.CoreSets.every((core) => !equalSet(core, gotoCore))) {
-                        this.CoreSets.push(gotoCore);
+                    const gotoKernel = this.goto(kernel, symbol);
+                    const gotoClosure = this.closure(gotoKernel);
+                    if (!this.Kernels.includes(gotoKernel)) {
+                        
+                        this.Kernels.push(gotoKernel);
+                        const lookaheadsMap = new WeakMap();
+                        for (const gotoItem of gotoClosure) {
+                            lookaheadsMap.set(gotoItem, new Set());
+                        }
+                        this.LookaheadsMMap.set(gotoKernel, lookaheadsMap);
                     }
                 }
             }
+
         }
     }
 
-    private getCoreFromClosure(closure: Set<Item>): Set<Item> {
+    private getKernelFromItemSet(closure: Set<Item>): Set<Item> {
+        if (this.KernelMap.has(closure)) {
+            return this.KernelMap.get(closure)!;
+        }
         const result = new Set<Item>();
         for (const item of closure) {
             if (item.index !== 0 || item === this.rootItem) {
                 result.add(item);
             }
         }
-        this.ClosureMap.set(result, this.closure(closure));
+        this.KernelMap.set(closure, result);
         return result;
     }
 
 
-    public goto(set: Set<Item>, symbol: NonTerminal | Terminal): Set<Item> {
-        if (this.GotoMap.has(set) && this.GotoMap.get(set)!.has(symbol)) {
-            return this.GotoMap.get(set)!.get(symbol)!;
+    public goto(kernel: Kernel, symbol: NonTerminal | Terminal): Kernel {
+        if (this.GotoMMap.has(kernel) && this.GotoMMap.get(kernel)!.has(symbol)) {
+            return this.GotoMMap.get(kernel)!.get(symbol)!;
         }
+        const closure = this.closure(kernel);
         const newSet = new Set<Item>();
-        for (const item of set) {
+        for (const item of closure) {
             if (item.ref.symbols[item.index] === symbol) {
                 newSet.add(this.ItemsMap.get(item.ref)![item.index + 1]);
             }
         }
-        const result = this.closure(newSet);
-        if (!this.GotoMap.has(set)) {
-            this.GotoMap.set(set, new Map([[symbol, result ]]));
+
+        let result = this.getKernelFromItemSet(newSet);
+
+        const [ equalKernel ] = this.Kernels.filter((kernel) => equalSet(kernel, result));
+        if (equalKernel) {
+            result = equalKernel;
+        }
+        
+        if (!this.GotoMMap.has(kernel)) {
+            this.GotoMMap.set(kernel, new Map([[symbol, result ]]));
         } else {
-            this.GotoMap.get(set)!.set(symbol, result);
+            this.GotoMMap.get(kernel)!.set(symbol, result);
         }
         return result;
     }

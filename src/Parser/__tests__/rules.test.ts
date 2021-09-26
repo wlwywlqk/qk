@@ -294,33 +294,27 @@ Program -> Declarations Statements`;
 
         const item1 = new Item(rule1.productions[0].right[0] as ProductionRightSingle, 0);
        
-        expect(rule1.goto(rule1.closure(new Set([item1])), 'S')).toEqual(new Set([
+        expect(rule1.goto(new Set([item1]), 'S')).toEqual(new Set([
             new Item(rule1.productions[0].right[0] as ProductionRightSingle, 1),
         ]));
 
-        expect(rule1.goto(rule1.closure(new Set([item1])), 'C')).toEqual(new Set([
+        expect(rule1.goto(new Set([item1]), 'C')).toEqual(new Set([
             new Item(rule1.productions[1].right[0] as ProductionRightSingle, 1),
-            new Item(rule1.productions[2].right[0] as ProductionRightSingle, 0),
-            new Item(rule1.productions[2].right[1] as ProductionRightSingle, 0),
         ]));
 
-        expect(rule1.goto(rule1.closure(new Set([item1])), 'c')).toEqual(new Set([
+        expect(rule1.goto(new Set([item1]), 'c')).toEqual(new Set([
             new Item(rule1.productions[2].right[0] as ProductionRightSingle, 1),
-            new Item(rule1.productions[2].right[0] as ProductionRightSingle, 0),
-            new Item(rule1.productions[2].right[1] as ProductionRightSingle, 0),
         ]));
 
-        expect(rule1.goto(rule1.closure(new Set([item1])), 'd')).toEqual(new Set([
+        expect(rule1.goto(new Set([item1]), 'd')).toEqual(new Set([
             new Item(rule1.productions[2].right[1] as ProductionRightSingle, 1),
         ]));
 
 
-        const item2 = rule1.goto(rule1.closure(new Set([item1])), 'c');
+        const item2 = rule1.goto(new Set([item1]), 'c');
 
         expect(rule1.goto(item2, 'c')).toEqual(new Set([
             new Item(rule1.productions[2].right[0] as ProductionRightSingle, 1),
-            new Item(rule1.productions[2].right[0] as ProductionRightSingle, 0),
-            new Item(rule1.productions[2].right[1] as ProductionRightSingle, 0),
         ]));
 
         expect(rule1.goto(item2, 'C')).toEqual(new Set([
@@ -338,7 +332,7 @@ Program -> Declarations Statements`;
                 | id
             R -> L
         `);
-        expect(rule1.CoreSets).toEqual([
+        expect(rule1.Kernels).toEqual([
             new Set([
                 new Item(rule1.productions[0].right[0] as ProductionRightSingle, 0),
             ]),
@@ -382,7 +376,38 @@ Program -> Declarations Statements`;
                 | id
             R -> L
         `);
-        rule1.collectLookaheads();
-        
+        expect(rule1.toArray()).toEqual([
+            [
+                ['Qk -> · S', new Set([END])]
+            ],
+            [
+                ['Qk -> S ·', new Set([END])]
+            ],
+            [
+                ['S -> L · = R', new Set([END])],
+                ['R -> L ·', new Set([END])]
+            ],
+            [
+                ['S -> R ·', new Set([END])]
+            ],
+            [
+                ['L -> * · R', new Set([END, '='])]
+            ],
+            [
+                ['L -> id ·', new Set([END, '='])]
+            ],
+            [
+                ['S -> L = · R', new Set([END])]
+            ],
+            [
+                ['L -> * R ·', new Set([END, '='])]
+            ],
+            [
+                ['R -> L ·', new Set([END, '='])]
+            ],
+            [
+                ['S -> L = R ·', new Set([END])]
+            ],
+        ])
     });
 });
