@@ -408,6 +408,6 @@ Program -> Declarations Statements`;
             [
                 ['S -> L = R ·', new Set([END])]
             ],
-        ])
+        ]);
     });
 });
