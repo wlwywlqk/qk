@@ -41,6 +41,8 @@ export class Item {
 export type Kernel = Set<Item>;
 export type Closure = Set<Item>;
 
+type a = Pick<>
+
 export enum Action {
     SHIFT,
     REDUCE,
@@ -220,7 +222,7 @@ export class Rules {
         }
     }
 
-    private getKernelFromItemSet(closure: Set<Item>): Set<Item> {
+    private extractKernelFromItemSet(closure: Set<Item>): Set<Item> {
         if (this.KernelMap.has(closure)) {
             return this.KernelMap.get(closure)!;
         }
@@ -247,7 +249,7 @@ export class Rules {
             }
         }
 
-        let result = this.getKernelFromItemSet(newSet);
+        let result = this.extractKernelFromItemSet(newSet);
 
         const [ equalKernel ] = this.Kernels.filter((kernel) => equalSet(kernel, result));
         if (equalKernel) {
