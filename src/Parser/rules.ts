@@ -41,7 +41,6 @@ export class Item {
 export type Kernel = Set<Item>;
 export type Closure = Set<Item>;
 
-type a = Pick<>
 
 export enum Action {
     SHIFT,
@@ -92,18 +91,20 @@ export class Rules {
             }
         }
         if (this.productions[0].left !== 'Qk') {
-            const rootProduction =  new Production('Qk', [new ProductionRightSingle([this.productions[0].left])]);
+            const rootProduction = new Production('Qk', [new ProductionRightSingle([this.productions[0].left])]);
             this.ProductionMap.set('Qk', rootProduction);
             this.ProductionRightSingleSet.add(rootProduction.right[0] as ProductionRightSingle);
             this.productions.unshift(rootProduction);
             this.rootProduction = rootProduction;
         }
-        
+
         this.enhanceProductions();
 
         this.collectFollow();
         this.collectItems();
         this.collectLookaheads();
+
+        this.collectActions();
     }
 
     public toArray() {
@@ -125,6 +126,10 @@ export class Rules {
 
     public isNonterminal(symbol: NonTerminal | Terminal) {
         return this.Nonterminals.has(symbol);
+    }
+
+    private collectActions() {
+
     }
 
     private collectLookaheads() {
@@ -163,7 +168,7 @@ export class Rules {
                     if (symbol && !used.has(symbol)) {
                         used.add(symbol);
                         const gotoKernel = this.goto(kernel, symbol);
-                        
+
                         const gotoClosure = this.closure(gotoKernel);
                         const gotoLookaheadsMap = this.LookaheadsMMap.get(gotoKernel)!;
                         if (!gotoLookaheadsMap) debugger;
@@ -185,7 +190,7 @@ export class Rules {
             }));
         }
         this.rootItem = this.ItemsMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
-        const rootKernel = new Set([this.rootItem])
+        const rootKernel = new Set([this.rootItem]);
         this.Kernels.push(rootKernel);
         const rootClosure = this.closure(rootKernel);
         const lookaheadsMap = new WeakMap();
@@ -198,7 +203,7 @@ export class Rules {
             const kernel = this.Kernels[i];
             const closure = this.closure(kernel);
             const used = new Set<NonTerminal | Terminal>();
-            
+
             for (const item of closure) {
 
                 const symbol = item.ref.symbols[item.index];
@@ -208,7 +213,7 @@ export class Rules {
                     const gotoKernel = this.goto(kernel, symbol);
                     const gotoClosure = this.closure(gotoKernel);
                     if (!this.Kernels.includes(gotoKernel)) {
-                        
+
                         this.Kernels.push(gotoKernel);
                         const lookaheadsMap = new WeakMap();
                         for (const gotoItem of gotoClosure) {
@@ -251,13 +256,13 @@ export class Rules {
 
         let result = this.extractKernelFromItemSet(newSet);
 
-        const [ equalKernel ] = this.Kernels.filter((kernel) => equalSet(kernel, result));
+        const [equalKernel] = this.Kernels.filter((kernel) => equalSet(kernel, result));
         if (equalKernel) {
             result = equalKernel;
         }
-        
+
         if (!this.GotoMMap.has(kernel)) {
-            this.GotoMMap.set(kernel, new Map([[symbol, result ]]));
+            this.GotoMMap.set(kernel, new Map([[symbol, result]]));
         } else {
             this.GotoMMap.get(kernel)!.set(symbol, result);
         }
@@ -279,7 +284,7 @@ export class Rules {
             for (const single of singleSet) {
                 result.add(this.ItemsMap.get(single)![0]);
             }
-            
+
         }
 
         this.ClosureMap.set(set, result);
@@ -396,20 +401,20 @@ export class Rules {
                 let followSets: Set<Terminal>[] = [];
                 for (let i = 0, len = single.symbols.length; i < len; i++) {
                     const symbol = single.symbols[i];
-    
+
                     if (this.isNonterminal(symbol)) {
                         const firstSet = this.first(symbol);
                         const followSet = this.FollowMap.get(symbol)!;
                         for (let j = 0, jLen = followSets.length; j < jLen; j++) {
                             changed = mergeSet(followSets[j], firstSet) || changed;
                         }
-    
+
                         if (this.nullable(symbol)) {
                             followSets.push(followSet);
                         } else {
                             followSets = [followSet];
                         }
-    
+
                         if (i === len - 1) {
                             for (let j = 0, jLen = followSets.length; j < jLen; j++) {
                                 changed = mergeSet(followSets[j], this.FollowMap.get(single.production!.left)!) || changed;
