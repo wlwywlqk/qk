@@ -123,6 +123,19 @@ export class Rules {
 
         return result;
     }
+    public print() {
+        let str = '';
+        for (const kernel of this.Kernels) {
+            const closure = this.closure(kernel);
+            str += '----------------------------------\n';
+            const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
+            for (const item of closure) {
+                str += `${item}  [${[...lookaheadsMap.get(item)!]}]\n`;
+            }
+        }
+
+        console.log(str);
+    }
 
     public isNonterminal(symbol: NonTerminal | Terminal) {
         return this.Nonterminals.has(symbol);
@@ -156,6 +169,7 @@ export class Rules {
                     lookaheads.delete(EPSILON);
                     const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
                     for (const single of singleSet) {
+                        if (single.symbols[0] === EPSILON) continue;
                         const subItem = this.ItemsMap.get(single)![0];
                         changed = mergeSet(lookaheadsMap.get(subItem)!, lookaheads) || changed;
                         itemSet.add(subItem);
@@ -282,6 +296,7 @@ export class Rules {
             }
             const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
             for (const single of singleSet) {
+                if (single.symbols[0] === EPSILON) continue;
                 result.add(this.ItemsMap.get(single)![0]);
             }
 
