@@ -4,8 +4,12 @@ import { ParserRuleError } from './error';
 
 export type Terminal = string;
 export type NonTerminal = string;
+
+
+export const PRIORITY_NOT_SET = -1;
+
 export class ProductionRightSingle {
-    constructor(public symbols: string[] = [], public code: string = '', public production: Production | null = null, public equal: ProductionRightEqual | null = null, public left: boolean = true) { }
+    constructor(public symbols: string[] = [], public code: string = '', public production: Production | null = null, public equal: ProductionRightEqual | null = null, public left: boolean = true, public priority = PRIORITY_NOT_SET) { }
     public toString() {
         return this.symbols.join(' ');
     }
@@ -54,6 +58,7 @@ export const EPSILON = 'ε';
 
 
 
+
 export class Rules {
     public productions: Production[] = [];
     public ProductionMap: Map<ProductionLeft, Production> = new Map();
@@ -99,6 +104,7 @@ export class Rules {
         }
 
         this.enhanceProductions();
+        this.collectPriority();
 
         this.collectFollow();
         this.collectItems();
@@ -141,11 +147,11 @@ export class Rules {
         return this.Nonterminals.has(symbol);
     }
 
-    private collectActions() {
+    private collectActions(): void {
 
     }
 
-    private collectLookaheads() {
+    private collectLookaheads(): void {
         this.LookaheadsMMap.get(this.Kernels[0])!.get(this.rootItem!)!.add(END);
 
         let changed = true;
@@ -196,7 +202,7 @@ export class Rules {
         }
     }
 
-    private collectItems() {
+    private collectItems(): void {
         for (const single of this.ProductionRightSingleSet) {
             this.ItemsMap.set(single, Array.from(Array(single.symbols.length + 1)).map((_, index) => {
                 const item = new Item(single, index);
@@ -401,7 +407,7 @@ export class Rules {
         return this.FollowMap.get(nonTerminal)!;
     }
 
-    private collectFollow() {
+    private collectFollow(): void {
         for (let i = 0, len = this.productions.length; i < len; i++) {
             this.FollowMap.set(this.productions[i].left, new Set());
         }
@@ -451,7 +457,48 @@ export class Rules {
         }
     }
 
+    private collectPriority(): void {
+        let priority = 0;
+       
+
+        const collectPriorityForProduction = (production: Production) => {
+            for (let j = 0, jLen = production.right.length; j < jLen; j++) {
+                const right = production.right[j];
+                if (right instanceof ProductionRightSingle) {
+                    if (right.priority !== PRIORITY_NOT_SET) return;
+                    right.priority = priority;
+                    for (let k = 0, kLen = right.symbols.length; k < kLen; k++) {
+                        const symbol = right.symbols[k];
+                        if (this.isNonterminal(symbol)) {
+                            collectPriorityForProduction(this.ProductionMap.get(symbol)!);
+                        }
+                    }
+                } else {
+                    for (let k = 0, kLen = right.items.length; k < kLen; k++) {
+                        const item = right.items[k];
+                        if (item.priority !== PRIORITY_NOT_SET) return;
+                        item.priority = priority;
+                        for (let k = 0, kLen = item.symbols.length; k < kLen; k++) {
+                            const symbol = item.symbols[k];
+                            if (this.isNonterminal(symbol)) {
+                                collectPriorityForProduction(this.ProductionMap.get(symbol)!);
+                            }
+                        }
+                    }
+                }
+                priority++;
+            }
+        }
+
+        for (let i = 0, iLen = this.productions.length; i < iLen; i++) {
+            const production = this.productions[i];
+            collectPriorityForProduction(production);
+        }
+
+    }
+
     private enhanceProductions(): void {
+
         for (let i = 0, iLen = this.productions.length; i < iLen; i++) {
             const production = this.productions[i];
             const singleSet = new Set<ProductionRightSingle>();
