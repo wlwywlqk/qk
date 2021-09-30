@@ -45,7 +45,7 @@ Program -> Declarations Statements`;
         |= Expression >= Expression`);
 
         const expectedProduction = new Production('RelExpression', []);
-        const expectedEqual = new ProductionRightEqual([], true);
+        const expectedEqual = new ProductionRightEqual([]);
         expectedEqual.items.push(new ProductionRightSingle(['Expression', '<', 'Expression'], '', expectedProduction, expectedEqual));
         expectedEqual.items.push(new ProductionRightSingle(['Expression', '<=', 'Expression'], '', expectedProduction, expectedEqual));
         expectedEqual.items.push(new ProductionRightSingle(['Expression', '>', 'Expression'], '', expectedProduction, expectedEqual));
@@ -116,7 +116,7 @@ Program -> Declarations Statements`;
         `);
 
         const expectedProduction = new Production('RelExpression', []);
-        const expectedEqual = new ProductionRightEqual([], true);
+        const expectedEqual = new ProductionRightEqual([]);
         expectedEqual.items.push(new ProductionRightSingle(['Expression', '<', 'Expression'], '', expectedProduction, expectedEqual));
         expectedEqual.items.push(new ProductionRightSingle(['Expression', '<=', 'Expression'], '', expectedProduction, expectedEqual));
         expectedEqual.items.push(new ProductionRightSingle(['Expression', '>', 'Expression'], '', expectedProduction, expectedEqual));
@@ -127,19 +127,6 @@ Program -> Declarations Statements`;
 
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction ]);
     });
-
-
-    test('rules with right equal throws', () => {
-
-        expect(() => {
-            const rules = new Rules(`RelExpression -> Expression < Expression
-            |= Expression <= Expression
-
-            =| Expression > Expression
-            |= Expression >= Expression`);
-        }).toThrow();
-    });
-
 
     test('rules nullable', () => {
         const simpleRules = new Rules(`

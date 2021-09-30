@@ -5,15 +5,15 @@ import { ParserRuleError } from './error';
 export type Terminal = string;
 export type NonTerminal = string;
 export class ProductionRightSingle {
-    constructor(public symbols: string[] = [], public code: string = '', public production: Production | null = null, public equal: ProductionRightEqual | null = null) { }
+    constructor(public symbols: string[] = [], public code: string = '', public production: Production | null = null, public equal: ProductionRightEqual | null = null, public left: boolean = true) { }
     public toString() {
         return this.symbols.join(' ');
     }
 }
 export class ProductionRightEqual {
-    constructor(public items: ProductionRightSingle[] = [], public left: boolean = true) { }
+    constructor(public items: ProductionRightSingle[] = []) { }
     public toString() {
-        return `${this.items.map((item) => `${item}`).join(this.left ? '\n\t|= ' : '\n\t=| ')}`;
+        return `${this.items.map((item) => `${item}`).join('|= ')}`;
     }
 }
 
@@ -546,9 +546,11 @@ export class Rules {
         const symbols = [];
 
         this.pickBlank();
-        while (!this.end && this.peek() !== '#' && this.peek() !== '\n') {
+        let peeked = this.peek()
+        while (!this.end && peeked !== '#' && peeked !== '%' ! && peeked !== '\n') {
             symbols.push(this.pickSymbol());
             this.pickBlank();
+            peeked = this.peek();
         }
         return symbols;
     }
@@ -568,6 +570,11 @@ export class Rules {
         const rightSingle = new ProductionRightSingle();
         this.ProductionRightSingleSet.add(rightSingle);
         rightSingle.symbols = this.pickProductionRightSymbols();
+        if (this.peek() === '%') {
+            this.pick('%right');
+            rightSingle.left = false;
+            this.pickBlank();
+        }
         if (this.peek() === '#') {
             this.pick('#');
             rightSingle.code = this.pickProductionRightCode();
@@ -587,28 +594,12 @@ export class Rules {
                     if (this.peek() === '=') {
                         this.pick('=');
                         if (last instanceof ProductionRightSingle) {
-                            productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle, this.pickProductionRightSingle()], true));
+                            productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle, this.pickProductionRightSingle()]));
                         } else {
-                            if (last.left) {
-                                last.items.push(this.pickProductionRightSingle());
-                            } else {
-                                throw new ParserRuleError('Unexpected equal left false.', this.line, this.col);
-                            }
+                            last.items.push(this.pickProductionRightSingle());
                         }
                     } else {
                         productionRight.push(this.pickProductionRightSingle());
-                    }
-                    break;
-                case '=':
-                    this.pick('=|');
-                    if (last instanceof ProductionRightSingle) {
-                        productionRight.push(new ProductionRightEqual([productionRight.pop() as ProductionRightSingle, this.pickProductionRightSingle()], false));
-                    } else {
-                        if (!last.left) {
-                            last.items.push(this.pickProductionRightSingle());
-                        } else {
-                            throw new ParserRuleError('Unexpected equal left true.', this.line, this.col);
-                        }
                     }
                     break;
                 case '\n': continue;

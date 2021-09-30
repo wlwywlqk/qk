@@ -31,8 +31,8 @@ ArithExpression -> Expression + Expression
     |= Expression - Expression
     | Expression * Expression
     |= Expression / Expression
-UnaryExpression -> ! Expression
-    =| - Expression
+UnaryExpression -> ! Expression    %right # test
+    |= - Expression       %right
 
 
 Statements -> Statements Statement
