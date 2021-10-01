@@ -459,14 +459,13 @@ export class Rules {
 
     private collectPriority(): void {
         let priority = 0;
-       
 
         const collectPriorityForProduction = (production: Production) => {
             for (let j = 0, jLen = production.right.length; j < jLen; j++) {
                 const right = production.right[j];
                 if (right instanceof ProductionRightSingle) {
                     if (right.priority !== PRIORITY_NOT_SET) return;
-                    right.priority = priority;
+                    right.priority = priority++;
                     for (let k = 0, kLen = right.symbols.length; k < kLen; k++) {
                         const symbol = right.symbols[k];
                         if (this.isNonterminal(symbol)) {
@@ -485,8 +484,8 @@ export class Rules {
                             }
                         }
                     }
+                    priority++;
                 }
-                priority++;
             }
         }
 

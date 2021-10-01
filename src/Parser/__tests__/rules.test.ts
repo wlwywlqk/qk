@@ -6,7 +6,7 @@ describe('rules', () => {
 
         const rules = new Rules(rulesStr);
         const expectedProduction = new Production('Program', []);
-        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Statements'], '', expectedProduction));
+        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Statements'], '', expectedProduction, null, true, 1));
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction ]);
         expect(rules.line).toEqual(1);
         expect(rules.col).toEqual(rulesStr.length);
@@ -33,7 +33,7 @@ Program -> Declarations Statements`;
         const rules = new Rules(`Program -> Declarations Statements   # test code`);
 
         const expectedProduction = new Production('Program', []);
-        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code', expectedProduction));
+        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code', expectedProduction, null, true, 1));
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction ]);
 
     });
@@ -46,10 +46,10 @@ Program -> Declarations Statements`;
 
         const expectedProduction = new Production('RelExpression', []);
         const expectedEqual = new ProductionRightEqual([]);
-        expectedEqual.items.push(new ProductionRightSingle(['Expression', '<', 'Expression'], '', expectedProduction, expectedEqual));
-        expectedEqual.items.push(new ProductionRightSingle(['Expression', '<=', 'Expression'], '', expectedProduction, expectedEqual));
-        expectedEqual.items.push(new ProductionRightSingle(['Expression', '>', 'Expression'], '', expectedProduction, expectedEqual));
-        expectedEqual.items.push(new ProductionRightSingle(['Expression', '>=', 'Expression'], '', expectedProduction, expectedEqual));
+        expectedEqual.items.push(new ProductionRightSingle(['Expression', '<', 'Expression'], '', expectedProduction, expectedEqual, true, 1));
+        expectedEqual.items.push(new ProductionRightSingle(['Expression', '<=', 'Expression'], '', expectedProduction, expectedEqual, true, 1));
+        expectedEqual.items.push(new ProductionRightSingle(['Expression', '>', 'Expression'], '', expectedProduction, expectedEqual, true, 1));
+        expectedEqual.items.push(new ProductionRightSingle(['Expression', '>=', 'Expression'], '', expectedProduction, expectedEqual, true, 1));
 
         expectedProduction.right.push(expectedEqual);
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction ]);
@@ -61,8 +61,8 @@ Program -> Declarations Statements`;
 
         const expectedProduction = new Production('Declarations', []);
 
-        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Declaration'], '', expectedProduction));
-        expectedProduction.right.push(new ProductionRightSingle([], '', expectedProduction));
+        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Declaration'], '', expectedProduction, null, true, 1));
+        expectedProduction.right.push(new ProductionRightSingle([], '', expectedProduction, null, true, 2));
 
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction ]);
     });
@@ -75,10 +75,10 @@ Program -> Declarations Statements`;
         `);
 
         const expectedProduction = new Production('Program', []);
-        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code', expectedProduction));
+        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code', expectedProduction, null, true, 1));
 
         const expectedProduction1 = new Production('Program1', []);
-        expectedProduction1.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code1', expectedProduction1));
+        expectedProduction1.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code1', expectedProduction1, null, true, 2));
 
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction, expectedProduction1 ]);
         expect(rules.Nonterminals).toEqual(new Set(['Program', 'Program1']));
@@ -94,11 +94,11 @@ Program -> Declarations Statements`;
         `);
 
         const expectedProduction = new Production('Program', []);
-        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code', expectedProduction));
+        expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code', expectedProduction, null, true, 1));
 
 
         const expectedProduction1 = new Production('Program1', []);
-        expectedProduction1.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code1', expectedProduction1));
+        expectedProduction1.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code1', expectedProduction1, null, true, 2));
 
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction, expectedProduction1 ]);
         expect(rules.Nonterminals).toEqual(new Set(['Program', 'Program1']));
@@ -117,13 +117,13 @@ Program -> Declarations Statements`;
 
         const expectedProduction = new Production('RelExpression', []);
         const expectedEqual = new ProductionRightEqual([]);
-        expectedEqual.items.push(new ProductionRightSingle(['Expression', '<', 'Expression'], '', expectedProduction, expectedEqual));
-        expectedEqual.items.push(new ProductionRightSingle(['Expression', '<=', 'Expression'], '', expectedProduction, expectedEqual));
-        expectedEqual.items.push(new ProductionRightSingle(['Expression', '>', 'Expression'], '', expectedProduction, expectedEqual));
-        expectedEqual.items.push(new ProductionRightSingle(['Expression', '>=', 'Expression'], '', expectedProduction, expectedEqual));
+        expectedEqual.items.push(new ProductionRightSingle(['Expression', '<', 'Expression'], '', expectedProduction, expectedEqual, true, 1));
+        expectedEqual.items.push(new ProductionRightSingle(['Expression', '<=', 'Expression'], '', expectedProduction, expectedEqual, true, 1));
+        expectedEqual.items.push(new ProductionRightSingle(['Expression', '>', 'Expression'], '', expectedProduction, expectedEqual, true, 1));
+        expectedEqual.items.push(new ProductionRightSingle(['Expression', '>=', 'Expression'], '', expectedProduction, expectedEqual, true, 1));
 
         expectedProduction.right.push(expectedEqual);
-        expectedProduction.right.push(new ProductionRightSingle(['Expression', '<', 'Expression'], '', expectedProduction));
+        expectedProduction.right.push(new ProductionRightSingle(['Expression', '<', 'Expression'], '', expectedProduction, null, true, 2));
 
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction ]);
     });
