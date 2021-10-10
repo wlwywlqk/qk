@@ -133,10 +133,10 @@ export class Rules {
         let str = '';
         for (const kernel of this.Kernels) {
             const closure = this.closure(kernel);
-            str += '----------------------------------\n';
+            str += `----------------------------------\n`;
             const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
             for (const item of closure) {
-                str += `${item}  [${[...lookaheadsMap.get(item)!]}]\n`;
+                str += `${item}  [${[...lookaheadsMap.get(item)!]}]  ${item.ref.priority}\n`;
             }
         }
 
@@ -191,7 +191,6 @@ export class Rules {
 
                         const gotoClosure = this.closure(gotoKernel);
                         const gotoLookaheadsMap = this.LookaheadsMMap.get(gotoKernel)!;
-                        if (!gotoLookaheadsMap) debugger;
                         for (const gotoItem of gotoClosure) {
                             changed = mergeSet(gotoLookaheadsMap.get(gotoItem)!, lookaheadsMap.get(item)!) || changed;
                         }

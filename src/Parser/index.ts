@@ -7,6 +7,6 @@ export class Parser {
         this.rules = new Rules(rules);
 
 
-        // this.rules.print();
+        this.rules.print();
     }
 }
