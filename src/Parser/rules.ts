@@ -165,7 +165,7 @@ export class Rules {
                 for (const item of itemSet) {
                     const symbol = item.ref.symbols[item.index];
                     if (!this.isNonterminal(symbol)) {
-                        break;
+                        continue;
                     }
 
                     const lookaheads = this.firstOfSymbols(item.ref.symbols.slice(item.index + 1));
@@ -297,7 +297,7 @@ export class Rules {
         for (const item of result) {
             const symbol = item.ref.symbols[item.index];
             if (!this.isNonterminal(symbol)) {
-                break;
+                continue;
             }
             const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
             for (const single of singleSet) {
