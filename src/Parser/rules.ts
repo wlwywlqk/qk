@@ -459,7 +459,7 @@ export class Rules {
     private collectPriority(): void {
         let priority = 0;
 
-        const collectPriorityForProduction = (production: Production) => {
+        const collectPriorityOfProduction = (production: Production) => {
             for (let j = 0, jLen = production.right.length; j < jLen; j++) {
                 const right = production.right[j];
                 if (right instanceof ProductionRightSingle) {
@@ -468,7 +468,7 @@ export class Rules {
                     for (let k = 0, kLen = right.symbols.length; k < kLen; k++) {
                         const symbol = right.symbols[k];
                         if (this.isNonterminal(symbol)) {
-                            collectPriorityForProduction(this.ProductionMap.get(symbol)!);
+                            collectPriorityOfProduction(this.ProductionMap.get(symbol)!);
                         }
                     }
                 } else {
@@ -479,7 +479,7 @@ export class Rules {
                         for (let k = 0, kLen = item.symbols.length; k < kLen; k++) {
                             const symbol = item.symbols[k];
                             if (this.isNonterminal(symbol)) {
-                                collectPriorityForProduction(this.ProductionMap.get(symbol)!);
+                                collectPriorityOfProduction(this.ProductionMap.get(symbol)!);
                             }
                         }
                     }
@@ -490,7 +490,7 @@ export class Rules {
 
         for (let i = 0, iLen = this.productions.length; i < iLen; i++) {
             const production = this.productions[i];
-            collectPriorityForProduction(production);
+            collectPriorityOfProduction(production);
         }
 
     }
