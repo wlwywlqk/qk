@@ -11,13 +11,13 @@ export const PRIORITY_NOT_SET = -1;
 export class ProductionRightSingle {
     constructor(public symbols: string[] = [], public code: string = '', public production: Production | null = null, public equal: ProductionRightEqual | null = null, public left: boolean = true, public priority = PRIORITY_NOT_SET) { }
     public toString() {
-        return this.symbols.join(' ');
+        return `${this.symbols.join(' ')} [${this.priority}]`;
     }
 }
 export class ProductionRightEqual {
     constructor(public items: ProductionRightSingle[] = []) { }
     public toString() {
-        return `${this.items.map((item) => `${item}`).join('|= ')}`;
+        return `${this.items.map((item) => `${item}`).join('\n\t|= ')}`;
     }
 }
 
@@ -131,15 +131,26 @@ export class Rules {
     }
     public print() {
         let str = '';
+        let index = 0;
         for (const kernel of this.Kernels) {
-            const closure = this.closure(kernel);
-            str += `----------------------------------\n`;
+            str += `-----------------${index++}-----------------\n`;
             const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
-            for (const item of closure) {
-                str += `${item}  [${[...lookaheadsMap.get(item)!]}]  ${item.ref.priority}\n`;
+            for (const item of kernel) {
+                str += `${item}  [${[...lookaheadsMap.get(item)!]}]\n`;
             }
         }
 
+        console.log(str);
+    }
+
+    public printProductions() {
+        let str = '';
+        let index = 0;
+        for (const production of this.productions) {
+            str += `-----------------${index++}-----------------\n`;
+
+            str += `${production}\n\n`;
+        }
         console.log(str);
     }
 
@@ -457,40 +468,42 @@ export class Rules {
     }
 
     private collectPriority(): void {
-        let priority = 0;
 
-        const collectPriorityOfProduction = (production: Production) => {
+        const collectPriorityOfProduction = (production: Production, priority: number = PRIORITY_NOT_SET): number => {
             for (let j = 0, jLen = production.right.length; j < jLen; j++) {
                 const right = production.right[j];
                 if (right instanceof ProductionRightSingle) {
-                    if (right.priority !== PRIORITY_NOT_SET) return;
-                    right.priority = priority++;
+                    if (right.priority !== PRIORITY_NOT_SET) return priority;
+                    const basePriority = priority++;
+                    right.priority = basePriority;
                     for (let k = 0, kLen = right.symbols.length; k < kLen; k++) {
                         const symbol = right.symbols[k];
                         if (this.isNonterminal(symbol)) {
-                            collectPriorityOfProduction(this.ProductionMap.get(symbol)!);
+                            priority = Math.max(basePriority, collectPriorityOfProduction(this.ProductionMap.get(symbol)!, basePriority + 1));
                         }
                     }
                 } else {
+                    const basePriority = priority++;
                     for (let k = 0, kLen = right.items.length; k < kLen; k++) {
                         const item = right.items[k];
-                        if (item.priority !== PRIORITY_NOT_SET) return;
-                        item.priority = priority;
+                        if (item.priority !== PRIORITY_NOT_SET) return priority;
+                        item.priority = basePriority;
                         for (let k = 0, kLen = item.symbols.length; k < kLen; k++) {
                             const symbol = item.symbols[k];
                             if (this.isNonterminal(symbol)) {
-                                collectPriorityOfProduction(this.ProductionMap.get(symbol)!);
+                                priority = Math.max(priority, collectPriorityOfProduction(this.ProductionMap.get(symbol)!, basePriority + 1));
                             }
                         }
                     }
-                    priority++;
                 }
             }
+            return priority;
         }
 
+        let priority = 0;
         for (let i = 0, iLen = this.productions.length; i < iLen; i++) {
             const production = this.productions[i];
-            collectPriorityOfProduction(production);
+            priority = collectPriorityOfProduction(production, priority);
         }
 
     }

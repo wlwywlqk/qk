@@ -60,9 +60,9 @@ Program -> Declarations Statements`;
         |`);
 
         const expectedProduction = new Production('Declarations', []);
-
         expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Declaration'], '', expectedProduction, null, true, 1));
         expectedProduction.right.push(new ProductionRightSingle([], '', expectedProduction, null, true, 2));
+
 
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction ]);
     });
@@ -73,6 +73,7 @@ Program -> Declarations Statements`;
         const rules = new Rules(`Program -> Declarations Statements   # test code
         Program1 -> Declarations Statements   # test code1
         `);
+        rules.printProductions()
 
         const expectedProduction = new Production('Program', []);
         expectedProduction.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code', expectedProduction, null, true, 1));

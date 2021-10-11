@@ -40,7 +40,7 @@ Statements -> Statements Statement
 Statement -> ExpressionStatement
     | IfStatement
     | WhileStatement
-    | DoWhileStatement
+    |= DoWhileStatement
     | BlockStatement
 
 ExpressionStatement -> Expression ;
