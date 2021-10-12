@@ -19,7 +19,6 @@ export function isNumber(char: string) {
 
 export function mergeSet(set1: Set<unknown>, ...rest: Set<unknown>[]): boolean {
     let changed = false;
-    if (!set1) debugger
     for (let i = 0, len = rest.length; i < len; i++) {
         const set2 = rest[i];
         if (set1 === set2) continue;
