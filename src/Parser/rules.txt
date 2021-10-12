@@ -11,12 +11,13 @@ Expression -> AssignExpression
     | RelExpression
     | ArithExpression
     | UnaryExpression
+    | ParenthesisExpression
     | id
     | num
     | str
     | true
     | false
-
+ParenthesisExpression -> ( Expression )
 AssignExpression -> id = Expression
 BoolExpression -> Expression || Expression
     | Expression && Expression

@@ -6,6 +6,6 @@ export class Parser {
     constructor (rules: string) {
         this.rules = new Rules(rules);
 
-        // this.rules.printProductions();
+        this.rules.print();
     }
 }
