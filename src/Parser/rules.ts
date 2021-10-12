@@ -135,7 +135,8 @@ export class Rules {
         for (const kernel of this.Kernels) {
             str += `-----------------${index++}-----------------\n`;
             const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
-            for (const item of kernel) {
+            const closure = this.closure(kernel);
+            for (const item of closure) {
                 str += `${item}  [${[...lookaheadsMap.get(item)!]}]\n`;
             }
         }
@@ -193,18 +194,12 @@ export class Rules {
                     }
                 }
 
-                const used = new Set<NonTerminal | Terminal>();
                 for (const item of closure) {
-                    const symbol = item.ref.symbols[item.index];
-                    if (symbol && !used.has(symbol)) {
-                        used.add(symbol);
+                    if (item.index < item.ref.symbols.length) {
+                        const symbol = item.ref.symbols[item.index];
                         const gotoKernel = this.goto(kernel, symbol);
-
-                        const gotoClosure = this.closure(gotoKernel);
                         const gotoLookaheadsMap = this.LookaheadsMMap.get(gotoKernel)!;
-                        for (const gotoItem of gotoClosure) {
-                            changed = mergeSet(gotoLookaheadsMap.get(gotoItem)!, lookaheadsMap.get(item)!) || changed;
-                        }
+                        changed = mergeSet(gotoLookaheadsMap.get(this.ItemsMap.get(item.ref)![item.index + 1])!, lookaheadsMap.get(item)!) || changed;
                     }
                 }
             }
