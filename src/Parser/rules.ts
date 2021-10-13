@@ -140,7 +140,7 @@ export class Rules {
             const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
             const closure = this.closure(kernel);
             for (const item of closure) {
-                str += `${item}  [${[...lookaheadsMap.get(item)!]}]\n`;
+                str += `${item}  [${[...lookaheadsMap.get(item)!]}]  「${item.ref.priority}」\n`;
             }
         }
 
