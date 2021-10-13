@@ -80,9 +80,12 @@ export class Rules {
     private LookaheadsMMap = new WeakMap<Kernel, WeakMap<Item, Set<NonTerminal | Terminal>>>();
     private KernelMap = new WeakMap<Kernel, Closure>();
 
-    private NullableMap = new Map<NonTerminal, boolean>();
-    private FirstMap = new Map<NonTerminal, Set<Terminal>>();
-    private FollowMap = new Map<NonTerminal, Set<Terminal>>();
+    public NullableMap = new Map<NonTerminal, boolean>();
+    public FirstMap = new Map<NonTerminal, Set<Terminal>>();
+    public FollowMap = new Map<NonTerminal, Set<Terminal>>();
+    public ActionMap = new Map<number, Map<Terminal, number>>();
+
+
 
 
     constructor(public readonly rules: string) {
@@ -160,7 +163,14 @@ export class Rules {
     }
 
     private collectActions(): void {
+        for (let i = 0, len = this.Kernels.length; i < len; i++) {
+            const closure = this.closure(this.Kernels[i]);
+            const map = new Map();
+            this.ActionMap.set(i, map);
+            for (const item of closure) {
+            }
 
+        }
     }
 
     private collectLookaheads(): void {
