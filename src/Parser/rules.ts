@@ -163,11 +163,20 @@ export class Rules {
     }
 
     private collectActions(): void {
+        const endSinlge = this.productions[0].right[0] as ProductionRightSingle;
+        const endItem = this.ItemsMap.get(endSinlge)![endSinlge.symbols.length];
         for (let i = 0, len = this.Kernels.length; i < len; i++) {
-            const closure = this.closure(this.Kernels[i]);
+            const kernel = this.Kernels[i];
+            const closure = this.closure(kernel);
+            const lookaheadsMap = this.LookaheadsMMap.get(kernel);
             const map = new Map();
             this.ActionMap.set(i, map);
             for (const item of closure) {
+                if (!this.isNonterminal(item.ref.symbols[item.index])) {
+
+                } else if (item.index === item.ref.symbols.length) {
+                    
+                }
             }
 
         }
