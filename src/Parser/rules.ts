@@ -47,10 +47,10 @@ export type Closure = Set<Item>;
 
 
 export enum Action {
+    ERROR = 0,
     SHIFT,
     REDUCE,
     ACCEPT,
-    ERROR
 }
 
 export const END = '$';
@@ -168,14 +168,22 @@ export class Rules {
         for (let i = 0, len = this.Kernels.length; i < len; i++) {
             const kernel = this.Kernels[i];
             const closure = this.closure(kernel);
-            const lookaheadsMap = this.LookaheadsMMap.get(kernel);
+            const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
             const map = new Map();
+            const priorityMap = new Map();
             this.ActionMap.set(i, map);
             for (const item of closure) {
-                if (!this.isNonterminal(item.ref.symbols[item.index])) {
-
+                const symbol = item.ref.symbols[item.index];
+                if (!this.isNonterminal(symbol)) {
+                    if (!(priorityMap.has(symbol) && item.ref.priority === priorityMap.get(symbol) && item.ref.left)) {
+                        map.set(symbol, Action.SHIFT);
+                    }
                 } else if (item.index === item.ref.symbols.length) {
-                    
+                    const lookaheads = lookaheadsMap.get(item)!;
+                    for (const lookahead of lookaheads) {
+                        map.set(lookahead, Action.REDUCE);
+                        priorityMap.set(lookahead, item.ref.priority);
+                    }
                 }
             }
 
@@ -332,8 +340,10 @@ export class Rules {
 
         }
 
-        this.ClosureMap.set(set, result);
-        return result;
+        const closure = new Set([...result].sort((a, b) => a.ref.priority - b.ref.priority));
+
+        this.ClosureMap.set(set, closure);
+        return closure;
     }
 
     public firstOfSymbols(symbols: NonTerminal[] | Terminal[]): Set<Terminal> {
