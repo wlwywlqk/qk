@@ -47,10 +47,10 @@ export type Closure = Set<Item>;
 
 
 export enum Action {
-    ERROR = 0,
-    SHIFT,
-    REDUCE,
-    ACCEPT,
+    SHIFT = 0,
+    REDUCE = -1,
+    ACCEPT = -2,
+    ERROR = -3,
 }
 
 export const END = '$';
@@ -65,6 +65,7 @@ export class Rules {
     public line = 1;
     public col = 0;
     public Nonterminals = new Set<NonTerminal>();
+    public Terminals = new Set<Terminal>();
     public rootProduction: Production | null = null;
     public rootItem: Item | null = null;
     public Kernels: Set<Item>[] = [];
@@ -83,9 +84,8 @@ export class Rules {
     public NullableMap = new Map<NonTerminal, boolean>();
     public FirstMap = new Map<NonTerminal, Set<Terminal>>();
     public FollowMap = new Map<NonTerminal, Set<Terminal>>();
-    public ActionMap = new Map<number, Map<Terminal, number>>();
-
-
+    public ActionMap = new Map<number, Map<Terminal, Action | number>>();
+    public GotoMap = new Map<number, Map<NonTerminal, number>>();
 
 
     constructor(public readonly rules: string) {
@@ -101,10 +101,16 @@ export class Rules {
         if (this.productions[0].left !== 'Qk') {
             const rootProduction = new Production('Qk', [new ProductionRightSingle([this.productions[0].left])]);
             this.ProductionMap.set('Qk', rootProduction);
+            this.Nonterminals.add('Qk');
             this.ProductionRightSingleSet.add(rootProduction.right[0] as ProductionRightSingle);
             this.productions.unshift(rootProduction);
             this.rootProduction = rootProduction;
         }
+
+        for (const nonterminal of this.Nonterminals) {
+            this.Terminals.delete(nonterminal);
+        }
+        this.Terminals.delete(EPSILON);
 
         this.enhanceProductions();
         this.collectPriority();
@@ -132,6 +138,7 @@ export class Rules {
 
         return result;
     }
+
     public print() {
         let str = '';
         let index = 0;
@@ -144,6 +151,49 @@ export class Rules {
             }
         }
 
+        console.log(str);
+    }
+
+    public printParsingTable() {
+        let str = '';
+
+        str += ''.padEnd(5);
+        str += `${[...this.Terminals].map(terminal => `${terminal}`.padEnd(8)).join('')}${END.padEnd(8)} | ${[...this.Nonterminals].map(terminal => `${terminal}`.padEnd(25)).join('')}`;
+        str += '\n';
+        str += ''.padEnd(str.length, '-');
+        for (let i = 0, len = this.Kernels.length; i < len; i++) {
+            const actionMap = this.ActionMap.get(i)!;
+            const gotoMap = this.GotoMap.get(i)!;
+
+            str += '\n';
+            str += `${i}`.padEnd(5);
+            
+            for (const terminal of this.Terminals) {
+                const action = actionMap.get(terminal);
+                switch (action) {
+                    case undefined: str += ''.padEnd(8); break;
+                    case Action.ACCEPT: str += 'accept'.padEnd(8); break;
+                    case Action.REDUCE: str += 'r'.padEnd(8); break;
+                    default: str += `s${action}`.padEnd(8); break;
+                }
+            }
+            const action = actionMap.get(END);
+            switch (action) {
+                case undefined: str += ''.padEnd(8); break;
+                case Action.ACCEPT: str += 'accept'.padEnd(8); break;
+                case Action.REDUCE: str += 'r'.padEnd(8); break;
+                default: str += `s${action}`.padEnd(8); break;
+            }
+            str += ` | `;
+            for (const nonterminal of this.Nonterminals) {
+                const goto = gotoMap.get(nonterminal)!;
+                if (goto === undefined) {
+                    str += ''.padEnd(25);
+                } else {
+                    str += `${goto}`.padEnd(25);
+                }
+            }
+        }
         console.log(str);
     }
 
@@ -169,25 +219,36 @@ export class Rules {
             const kernel = this.Kernels[i];
             const closure = this.closure(kernel);
             const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
-            const map = new Map();
-            const priorityMap = new Map();
-            this.ActionMap.set(i, map);
+            const priorityMap = new Map<Terminal, number>();
+            const actionMap = new Map<Terminal, Action | number>();
+            const gotoMap = new Map<NonTerminal, number>();
+            this.ActionMap.set(i, actionMap);
+            this.GotoMap.set(i, gotoMap);
             for (const item of closure) {
                 const symbol = item.ref.symbols[item.index];
-                if (!this.isNonterminal(symbol)) {
-                    if (!(priorityMap.has(symbol) && item.ref.priority === priorityMap.get(symbol) && item.ref.left)) {
-                        map.set(symbol, Action.SHIFT);
-                        priorityMap.delete(symbol);
+
+                if (item.index === item.ref.symbols.length) {
+                    if (item === endItem) {
+                        actionMap.set(END, Action.ACCEPT);
+                    } else {
+                        const lookaheads = lookaheadsMap.get(item)!;
+
+                        for (const lookahead of lookaheads) {
+                            actionMap.set(lookahead, Action.REDUCE);
+                            priorityMap.set(lookahead, item.ref.priority);
+                        }
                     }
-                } else if (item.index === item.ref.symbols.length) {
-                    const lookaheads = lookaheadsMap.get(item)!;
-                    for (const lookahead of lookaheads) {
-                        map.set(lookahead, Action.REDUCE);
-                        priorityMap.set(lookahead, item.ref.priority);
+                } else {
+                    const gotoIndex = this.Kernels.indexOf(this.goto(kernel, symbol));
+
+                    if (this.isNonterminal(symbol)) {
+                        gotoMap.set(symbol, gotoIndex);
+                    } else if (!(priorityMap.has(symbol) && item.ref.priority === priorityMap.get(symbol) && item.ref.left)) {
+                        actionMap.set(symbol, gotoIndex);
+                        priorityMap.delete(symbol);
                     }
                 }
             }
-
         }
     }
 
@@ -606,6 +667,7 @@ export class Rules {
         if (this.i === start) {
             throw new ParserRuleError('Unexpected letter.', this.line, this.col);
         }
+        
         return this.rules.slice(start, this.i);
     }
 
@@ -617,7 +679,9 @@ export class Rules {
         if (this.i === start) {
             throw new ParserRuleError('Unexpected symbol.', this.line, this.col);
         }
-        return this.rules.slice(start, this.i);
+        const symbol = this.rules.slice(start, this.i);
+        this.Terminals.add(symbol);
+        return symbol;
     }
 
     private pickProductionLeft(): ProductionLeft {
