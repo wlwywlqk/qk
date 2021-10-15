@@ -1,4 +1,4 @@
-import { Rules, Production, ProductionLeft, ProductionRight, ProductionRightSingle, ProductionRightEqual, Item, END, EPSILON } from '../rules';
+import { Rules, Production, ProductionLeft, ProductionRight, ProductionRightSingle, ProductionRightEqual, Item, Action, END, EPSILON } from '../rules';
 describe('rules', () => {
 
     test('sample single rules', () => {
@@ -25,7 +25,7 @@ Program -> Declarations Statements`;
         expect(rules.col).toEqual(35);
         expect(rules.end).toBeTruthy();
 
-        expect(rules.Nonterminals).toEqual(new Set(['Program']));
+        expect(rules.Nonterminals).toEqual(new Set(['Qk', 'Program']));
         expect((rules.productions[0].right[0] as ProductionRightSingle).production === rules.productions[0]).toBeTruthy();
     });
 
@@ -81,7 +81,7 @@ Program -> Declarations Statements`;
         expectedProduction1.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code1', expectedProduction1, null, true, 2));
 
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction, expectedProduction1 ]);
-        expect(rules.Nonterminals).toEqual(new Set(['Program', 'Program1']));
+        expect(rules.Nonterminals).toEqual(new Set(['Qk', 'Program', 'Program1']));
     });
 
 
@@ -101,7 +101,7 @@ Program -> Declarations Statements`;
         expectedProduction1.right.push(new ProductionRightSingle(['Declarations', 'Statements'], 'test code1', expectedProduction1, null, true, 2));
 
         expect(rules.productions).toEqual([ rules.rootProduction, expectedProduction, expectedProduction1 ]);
-        expect(rules.Nonterminals).toEqual(new Set(['Program', 'Program1']));
+        expect(rules.Nonterminals).toEqual(new Set(['Qk', 'Program', 'Program1']));
     });
 
 
@@ -233,39 +233,38 @@ Program -> Declarations Statements`;
 
     test('rules closure', () => {
         const rule1 = new Rules(`
-            SS -> S
             S -> C C
             C -> c C 
                 | d
         `);
         expect(rule1.closure(new Set([]))).toEqual(new Set([]));
-        const item1 = new Item(rule1.productions[1].right[0] as ProductionRightSingle, 0);
+        const item1 = new Item(rule1.productions[0].right[0] as ProductionRightSingle, 0);
         expect(rule1.closure(new Set([item1]))).toEqual(new Set([
+            new Item(rule1.productions[0].right[0] as ProductionRightSingle, 0),
             new Item(rule1.productions[1].right[0] as ProductionRightSingle, 0),
             new Item(rule1.productions[2].right[0] as ProductionRightSingle, 0),
-            new Item(rule1.productions[3].right[0] as ProductionRightSingle, 0),
-            new Item(rule1.productions[3].right[1] as ProductionRightSingle, 0)
+            new Item(rule1.productions[2].right[1] as ProductionRightSingle, 0)
         ]));
-        const item2 = new Item(rule1.productions[2].right[0] as ProductionRightSingle, 1);
+        const item2 = new Item(rule1.productions[1].right[0] as ProductionRightSingle, 1);
 
         expect(rule1.closure(new Set([item2]))).toEqual(new Set([
-            new Item(rule1.productions[2].right[0] as ProductionRightSingle, 1),
-            new Item(rule1.productions[3].right[0] as ProductionRightSingle, 0),
-            new Item(rule1.productions[3].right[1] as ProductionRightSingle, 0)
+            new Item(rule1.productions[1].right[0] as ProductionRightSingle, 1),
+            new Item(rule1.productions[2].right[0] as ProductionRightSingle, 0),
+            new Item(rule1.productions[2].right[1] as ProductionRightSingle, 0)
         ]));
 
-        const item3 = new Item(rule1.productions[3].right[0] as ProductionRightSingle, 1);
+        const item3 = new Item(rule1.productions[2].right[0] as ProductionRightSingle, 1);
 
         expect(rule1.closure(new Set([item3]))).toEqual(new Set([
-            new Item(rule1.productions[3].right[0] as ProductionRightSingle, 1),
-            new Item(rule1.productions[3].right[0] as ProductionRightSingle, 0),
-            new Item(rule1.productions[3].right[1] as ProductionRightSingle, 0)
+            new Item(rule1.productions[2].right[0] as ProductionRightSingle, 1),
+            new Item(rule1.productions[2].right[0] as ProductionRightSingle, 0),
+            new Item(rule1.productions[2].right[1] as ProductionRightSingle, 0)
         ]));
 
-        const item4 = new Item(rule1.productions[3].right[1] as ProductionRightSingle, 0);
+        const item4 = new Item(rule1.productions[2].right[1] as ProductionRightSingle, 0);
 
         expect(rule1.closure(new Set([item4]))).toEqual(new Set([
-            new Item(rule1.productions[3].right[1] as ProductionRightSingle, 0),
+            new Item(rule1.productions[2].right[1] as ProductionRightSingle, 0),
         ]));
 
         const itemSet = new Set([item4]);
@@ -396,5 +395,32 @@ Program -> Declarations Statements`;
                 ['S -> L = R ·', new Set([END])]
             ],
         ]);
+    });
+    test('rules parsing table', () => {
+        const rule = new Rules(`
+            S -> C C
+            C -> c C 
+                | d
+        `);
+        expect(rule.ActionMap.get(0)!.get('c')!).toBe(3);
+        expect(rule.ActionMap.get(0)!.get('d')!).toBe(4);
+        expect(rule.ActionMap.get(1)!.get(END)!).toBe(Action.ACCEPT);
+        expect(rule.ActionMap.get(2)!.get('c')!).toBe(3);
+        expect(rule.ActionMap.get(2)!.get('d')!).toBe(4);
+        expect(rule.ActionMap.get(3)!.get('c')!).toBe(3);
+        expect(rule.ActionMap.get(3)!.get('d')!).toBe(4);
+        expect(rule.ActionMap.get(4)!.get('c')!).toBe(Action.REDUCE);
+        expect(rule.ActionMap.get(4)!.get('d')!).toBe(Action.REDUCE);
+        expect(rule.ActionMap.get(4)!.get(END)!).toBe(Action.REDUCE);
+        expect(rule.ActionMap.get(5)!.get(END)!).toBe(Action.REDUCE);
+        expect(rule.ActionMap.get(6)!.get('c')!).toBe(Action.REDUCE);
+        expect(rule.ActionMap.get(6)!.get('d')!).toBe(Action.REDUCE);
+        expect(rule.ActionMap.get(6)!.get(END)!).toBe(Action.REDUCE);
+
+        expect(rule.GotoMap.get(0)!.get('S')!).toBe(1);
+        expect(rule.GotoMap.get(0)!.get('C')!).toBe(2);
+        expect(rule.GotoMap.get(2)!.get('C')!).toBe(5);
+        expect(rule.GotoMap.get(3)!.get('C')!).toBe(6);
+
     });
 });
