@@ -177,6 +177,7 @@ export class Rules {
                 if (!this.isNonterminal(symbol)) {
                     if (!(priorityMap.has(symbol) && item.ref.priority === priorityMap.get(symbol) && item.ref.left)) {
                         map.set(symbol, Action.SHIFT);
+                        priorityMap.delete(symbol);
                     }
                 } else if (item.index === item.ref.symbols.length) {
                     const lookaheads = lookaheadsMap.get(item)!;
