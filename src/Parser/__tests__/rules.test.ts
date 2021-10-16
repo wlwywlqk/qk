@@ -318,7 +318,7 @@ Program -> Declarations Statements`;
                 | id
             R -> L
         `);
-        expect(rule1.Kernels).toEqual([
+        expect(rule1.kernels).toEqual([
             new Set([
                 new Item(rule1.productions[0].right[0] as ProductionRightSingle, 0),
             ]),
@@ -402,20 +402,21 @@ Program -> Declarations Statements`;
             C -> c C 
                 | d
         `);
-        expect(rule.ActionMap.get(0)!.get('c')!).toBe(3);
-        expect(rule.ActionMap.get(0)!.get('d')!).toBe(4);
-        expect(rule.ActionMap.get(1)!.get(END)!).toBe(Action.ACCEPT);
-        expect(rule.ActionMap.get(2)!.get('c')!).toBe(3);
-        expect(rule.ActionMap.get(2)!.get('d')!).toBe(4);
-        expect(rule.ActionMap.get(3)!.get('c')!).toBe(3);
-        expect(rule.ActionMap.get(3)!.get('d')!).toBe(4);
-        expect(rule.ActionMap.get(4)!.get('c')!).toBe(Action.REDUCE);
-        expect(rule.ActionMap.get(4)!.get('d')!).toBe(Action.REDUCE);
-        expect(rule.ActionMap.get(4)!.get(END)!).toBe(Action.REDUCE);
-        expect(rule.ActionMap.get(5)!.get(END)!).toBe(Action.REDUCE);
-        expect(rule.ActionMap.get(6)!.get('c')!).toBe(Action.REDUCE);
-        expect(rule.ActionMap.get(6)!.get('d')!).toBe(Action.REDUCE);
-        expect(rule.ActionMap.get(6)!.get(END)!).toBe(Action.REDUCE);
+        rule.printParsingTable();
+        expect(rule.ActionMap.get(0)!.get('c')!).toStrictEqual([Action.SHIFT, 3]);
+        expect(rule.ActionMap.get(0)!.get('d')!).toStrictEqual([Action.SHIFT, 4]);
+        expect(rule.ActionMap.get(1)!.get(END)!).toStrictEqual([Action.ACCEPT, 0]);
+        expect(rule.ActionMap.get(2)!.get('c')!).toStrictEqual([Action.SHIFT, 3]);
+        expect(rule.ActionMap.get(2)!.get('d')!).toStrictEqual([Action.SHIFT, 4]);
+        expect(rule.ActionMap.get(3)!.get('c')!).toStrictEqual([Action.SHIFT, 3]);
+        expect(rule.ActionMap.get(3)!.get('d')!).toStrictEqual([Action.SHIFT, 4]);
+        expect(rule.ActionMap.get(4)!.get('c')!).toStrictEqual([Action.REDUCE, 2]);
+        expect(rule.ActionMap.get(4)!.get('d')!).toStrictEqual([Action.REDUCE, 2]);
+        expect(rule.ActionMap.get(4)!.get(END)!).toStrictEqual([Action.REDUCE, 2]);
+        expect(rule.ActionMap.get(5)!.get(END)!).toStrictEqual([Action.REDUCE, 0]);
+        expect(rule.ActionMap.get(6)!.get('c')!).toStrictEqual([Action.REDUCE, 1]);
+        expect(rule.ActionMap.get(6)!.get('d')!).toStrictEqual([Action.REDUCE, 1]);
+        expect(rule.ActionMap.get(6)!.get(END)!).toStrictEqual([Action.REDUCE, 1]);
 
         expect(rule.GotoMap.get(0)!.get('S')!).toBe(1);
         expect(rule.GotoMap.get(0)!.get('C')!).toBe(2);

@@ -45,12 +45,11 @@ export class Item {
 export type Kernel = Set<Item>;
 export type Closure = Set<Item>;
 
-
 export enum Action {
-    SHIFT = 0,
-    REDUCE = -1,
-    ACCEPT = -2,
-    ERROR = -3,
+    SHIFT,
+    REDUCE,
+    ACCEPT,
+    ERROR
 }
 
 export const END = '$';
@@ -61,6 +60,7 @@ export const EPSILON = 'ε';
 
 export class Rules {
     public productions: Production[] = [];
+    public productionSingles: ProductionRightSingle[] = [];
     public ProductionMap: Map<ProductionLeft, Production> = new Map();
     public line = 1;
     public col = 0;
@@ -68,7 +68,7 @@ export class Rules {
     public Terminals = new Set<Terminal>();
     public rootProduction: Production | null = null;
     public rootItem: Item | null = null;
-    public Kernels: Set<Item>[] = [];
+    public kernels: Set<Item>[] = [];
 
     private i = 0;
 
@@ -84,7 +84,7 @@ export class Rules {
     public NullableMap = new Map<NonTerminal, boolean>();
     public FirstMap = new Map<NonTerminal, Set<Terminal>>();
     public FollowMap = new Map<NonTerminal, Set<Terminal>>();
-    public ActionMap = new Map<number, Map<Terminal, Action | number>>();
+    public ActionMap = new Map<number, Map<Terminal, [Action, number]>>();
     public GotoMap = new Map<number, Map<NonTerminal, number>>();
 
 
@@ -107,6 +107,8 @@ export class Rules {
             this.rootProduction = rootProduction;
         }
 
+        this.productionSingles = [...this.ProductionRightSingleSet];
+
         for (const nonterminal of this.Nonterminals) {
             this.Terminals.delete(nonterminal);
         }
@@ -124,8 +126,8 @@ export class Rules {
 
     public toArray() {
         const result = [];
-        for (let i = 0, len = this.Kernels.length; i < len; i++) {
-            const kernel = this.Kernels[i];
+        for (let i = 0, len = this.kernels.length; i < len; i++) {
+            const kernel = this.kernels[i];
             const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
 
             const kernelArray = [];
@@ -142,7 +144,7 @@ export class Rules {
     public print() {
         let str = '';
         let index = 0;
-        for (const kernel of this.Kernels) {
+        for (const kernel of this.kernels) {
             str += `-----------------${index++}-----------------\n`;
             const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
             const closure = this.closure(kernel);
@@ -161,7 +163,7 @@ export class Rules {
         str += `${[...this.Terminals].map(terminal => `${terminal}`.padEnd(8)).join('')}${END.padEnd(8)} | ${[...this.Nonterminals].map(terminal => `${terminal}`.padEnd(25)).join('')}`;
         str += '\n';
         str += ''.padEnd(str.length, '-');
-        for (let i = 0, len = this.Kernels.length; i < len; i++) {
+        for (let i = 0, len = this.kernels.length; i < len; i++) {
             const actionMap = this.ActionMap.get(i)!;
             const gotoMap = this.GotoMap.get(i)!;
 
@@ -170,20 +172,28 @@ export class Rules {
             
             for (const terminal of this.Terminals) {
                 const action = actionMap.get(terminal);
-                switch (action) {
-                    case undefined: str += ''.padEnd(8); break;
-                    case Action.ACCEPT: str += 'accept'.padEnd(8); break;
-                    case Action.REDUCE: str += 'r'.padEnd(8); break;
-                    default: str += `s${action}`.padEnd(8); break;
+                if (!action) {
+                    str += ''.padEnd(8)
+                } else {
+                    switch (action[0]) {
+                        case Action.ACCEPT: str += 'accept'.padEnd(8); break;
+                        case Action.REDUCE: str += `r${action[1]}`.padEnd(8); break;
+                        case Action.SHIFT: str += `s${action[1]}`.padEnd(8); break;
+                    }
                 }
+                
             }
             const action = actionMap.get(END);
-            switch (action) {
-                case undefined: str += ''.padEnd(8); break;
-                case Action.ACCEPT: str += 'accept'.padEnd(8); break;
-                case Action.REDUCE: str += 'r'.padEnd(8); break;
-                default: str += `s${action}`.padEnd(8); break;
+            if (!action) {
+                str += ''.padEnd(8)
+            } else {
+                switch (action[0]) {
+                    case Action.ACCEPT: str += 'accept'.padEnd(8); break;
+                    case Action.REDUCE: str += `r${action[1]}`.padEnd(8); break;
+                    case Action.SHIFT: str += `s${action[1]}`.padEnd(8); break;
+                }
             }
+           
             str += ` | `;
             for (const nonterminal of this.Nonterminals) {
                 const goto = gotoMap.get(nonterminal)!;
@@ -215,12 +225,12 @@ export class Rules {
     private collectActions(): void {
         const endSinlge = this.productions[0].right[0] as ProductionRightSingle;
         const endItem = this.ItemsMap.get(endSinlge)![endSinlge.symbols.length];
-        for (let i = 0, len = this.Kernels.length; i < len; i++) {
-            const kernel = this.Kernels[i];
+        for (let i = 0, len = this.kernels.length; i < len; i++) {
+            const kernel = this.kernels[i];
             const closure = this.closure(kernel);
             const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
             const priorityMap = new Map<Terminal, number>();
-            const actionMap = new Map<Terminal, Action | number>();
+            const actionMap = new Map<Terminal, [Action, number]>();
             const gotoMap = new Map<NonTerminal, number>();
             this.ActionMap.set(i, actionMap);
             this.GotoMap.set(i, gotoMap);
@@ -229,22 +239,22 @@ export class Rules {
 
                 if (item.index === item.ref.symbols.length) {
                     if (item === endItem) {
-                        actionMap.set(END, Action.ACCEPT);
+                        actionMap.set(END, [Action.ACCEPT, 0]);
                     } else {
                         const lookaheads = lookaheadsMap.get(item)!;
 
                         for (const lookahead of lookaheads) {
-                            actionMap.set(lookahead, Action.REDUCE);
+                            actionMap.set(lookahead, [Action.REDUCE, this.productionSingles.indexOf(item.ref)]);
                             priorityMap.set(lookahead, item.ref.priority);
                         }
                     }
                 } else {
-                    const gotoIndex = this.Kernels.indexOf(this.goto(kernel, symbol));
+                    const gotoIndex = this.kernels.indexOf(this.goto(kernel, symbol));
 
                     if (this.isNonterminal(symbol)) {
                         gotoMap.set(symbol, gotoIndex);
                     } else if (!(priorityMap.has(symbol) && item.ref.priority === priorityMap.get(symbol) && item.ref.left)) {
-                        actionMap.set(symbol, gotoIndex);
+                        actionMap.set(symbol, [Action.SHIFT, gotoIndex]);
                         priorityMap.delete(symbol);
                     }
                 }
@@ -253,12 +263,12 @@ export class Rules {
     }
 
     private collectLookaheads(): void {
-        this.LookaheadsMMap.get(this.Kernels[0])!.get(this.rootItem!)!.add(END);
+        this.LookaheadsMMap.get(this.kernels[0])!.get(this.rootItem!)!.add(END);
 
         let changed = true;
         while (changed) {
             changed = false;
-            for (const kernel of this.Kernels) {
+            for (const kernel of this.kernels) {
                 const itemSet = new Set(kernel);
                 const closure = this.closure(kernel);
                 const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
@@ -305,7 +315,7 @@ export class Rules {
         }
         this.rootItem = this.ItemsMap.get(this.productions[0].right[0] as ProductionRightSingle)![0];
         const rootKernel = new Set([this.rootItem]);
-        this.Kernels.push(rootKernel);
+        this.kernels.push(rootKernel);
         const rootClosure = this.closure(rootKernel);
         const lookaheadsMap = new WeakMap();
         for (const item of rootClosure) {
@@ -313,8 +323,8 @@ export class Rules {
         }
         this.LookaheadsMMap.set(rootKernel, lookaheadsMap);
 
-        for (let i = 0; i < this.Kernels.length; i++) {
-            const kernel = this.Kernels[i];
+        for (let i = 0; i < this.kernels.length; i++) {
+            const kernel = this.kernels[i];
             const closure = this.closure(kernel);
             const used = new Set<NonTerminal | Terminal>();
 
@@ -326,9 +336,9 @@ export class Rules {
 
                     const gotoKernel = this.goto(kernel, symbol);
                     const gotoClosure = this.closure(gotoKernel);
-                    if (!this.Kernels.includes(gotoKernel)) {
+                    if (!this.kernels.includes(gotoKernel)) {
 
-                        this.Kernels.push(gotoKernel);
+                        this.kernels.push(gotoKernel);
                         const lookaheadsMap = new WeakMap();
                         for (const gotoItem of gotoClosure) {
                             lookaheadsMap.set(gotoItem, new Set());
@@ -370,7 +380,7 @@ export class Rules {
 
         let result = this.extractKernelFromItemSet(newSet);
 
-        const [equalKernel] = this.Kernels.filter((kernel) => equalSet(kernel, result));
+        const [equalKernel] = this.kernels.filter((kernel) => equalSet(kernel, result));
         if (equalKernel) {
             result = equalKernel;
         }
