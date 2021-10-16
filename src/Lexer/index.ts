@@ -64,7 +64,7 @@ export class Lexer {
         try {
             return this.scanImpl();
         } catch (e) {
-            this.error = e;
+            this.error = e as LexerError;
             throw e;
         }
     }
