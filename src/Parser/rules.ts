@@ -235,28 +235,42 @@ export class Rules {
             this.ActionMap.set(i, actionMap);
             this.GotoMap.set(i, gotoMap);
             for (const item of closure) {
-                const symbol = item.ref.symbols[item.index];
 
-                if (item.index === item.ref.symbols.length) {
-                    if (item === endItem) {
-                        actionMap.set(END, [Action.ACCEPT, 0]);
+                for (let i = item.index, len = item.ref.symbols.length; i <= len; i++) {
+                    const symbol = item.ref.symbols[i];
+                    if (item.index === len) {
+                        if (item === endItem) {
+                            actionMap.set(END, [Action.ACCEPT, Action.ACCEPT]);
+                        } else {
+                            const lookaheads = lookaheadsMap.get(item)!;
+    
+                            for (const lookahead of lookaheads) {
+                                actionMap.set(lookahead, [Action.REDUCE, this.productionSingles.indexOf(item.ref)]);
+                                priorityMap.set(lookahead, item.ref.priority);
+                            }
+                        }
                     } else {
-                        const lookaheads = lookaheadsMap.get(item)!;
-
-                        for (const lookahead of lookaheads) {
-                            actionMap.set(lookahead, [Action.REDUCE, this.productionSingles.indexOf(item.ref)]);
-                            priorityMap.set(lookahead, item.ref.priority);
+                        const gotoIndex = this.kernels.indexOf(this.goto(kernel, symbol));
+                        if (this.isNonterminal(symbol)) {
+                            gotoMap.set(symbol, gotoIndex);
+                            if (!this.nullable(symbol)) {
+                                break;
+                            }
+                        } else {
+                            if (!(priorityMap.has(symbol) && item.ref.priority === priorityMap.get(symbol) && item.ref.left)) {
+                                actionMap.set(symbol, [Action.SHIFT, gotoIndex]);
+                                priorityMap.delete(symbol);
+                            }
+                            break;
                         }
                     }
-                } else {
-                    const gotoIndex = this.kernels.indexOf(this.goto(kernel, symbol));
-
-                    if (this.isNonterminal(symbol)) {
-                        gotoMap.set(symbol, gotoIndex);
-                    } else if (!(priorityMap.has(symbol) && item.ref.priority === priorityMap.get(symbol) && item.ref.left)) {
-                        actionMap.set(symbol, [Action.SHIFT, gotoIndex]);
-                        priorityMap.delete(symbol);
-                    }
+                   
+                }
+            }
+            const map = this.GotoMMap.get(kernel) || new Map();
+            for (const [key, val] of map) {
+                if (this.isNonterminal(key)) {
+                    gotoMap.set(key, this.kernels.indexOf(val));
                 }
             }
         }
@@ -274,23 +288,29 @@ export class Rules {
                 const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
 
                 for (const item of itemSet) {
-                    const symbol = item.ref.symbols[item.index];
-                    if (!this.isNonterminal(symbol)) {
-                        continue;
+                    for (let i = item.index, len = item.ref.symbols.length; i < len; i++) {
+                        const symbol = item.ref.symbols[i];
+                        if (!this.isNonterminal(symbol)) {
+                            break;
+                        }
+                        const lookaheads = this.firstOfSymbols(item.ref.symbols.slice(i + 1));
+                        if (lookaheads.has(EPSILON) || lookaheads.size === 0) {
+                            mergeSet(lookaheads, lookaheadsMap.get(item)!);
+                        }
+                        lookaheads.delete(EPSILON);
+                        const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
+                        for (const single of singleSet) {
+                            if (single.symbols[0] === EPSILON) continue;
+                            const subItem = this.ItemsMap.get(single)![0];
+                            changed = mergeSet(lookaheadsMap.get(subItem)!, lookaheads) || changed;
+                            itemSet.add(subItem);
+                        }
+                        if (!this.nullable(symbol)) {
+                            break;
+                        }
                     }
 
-                    const lookaheads = this.firstOfSymbols(item.ref.symbols.slice(item.index + 1));
-                    if (lookaheads.has(EPSILON) || lookaheads.size === 0) {
-                        mergeSet(lookaheads, lookaheadsMap.get(item)!);
-                    }
-                    lookaheads.delete(EPSILON);
-                    const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
-                    for (const single of singleSet) {
-                        if (single.symbols[0] === EPSILON) continue;
-                        const subItem = this.ItemsMap.get(single)![0];
-                        changed = mergeSet(lookaheadsMap.get(subItem)!, lookaheads) || changed;
-                        itemSet.add(subItem);
-                    }
+                    
                 }
 
                 for (const item of closure) {
@@ -329,21 +349,25 @@ export class Rules {
             const used = new Set<NonTerminal | Terminal>();
 
             for (const item of closure) {
-
-                const symbol = item.ref.symbols[item.index];
-                if (symbol && !used.has(symbol)) {
-                    used.add(symbol);
-
-                    const gotoKernel = this.goto(kernel, symbol);
-                    const gotoClosure = this.closure(gotoKernel);
-                    if (!this.kernels.includes(gotoKernel)) {
-
-                        this.kernels.push(gotoKernel);
-                        const lookaheadsMap = new WeakMap();
-                        for (const gotoItem of gotoClosure) {
-                            lookaheadsMap.set(gotoItem, new Set());
+                for (let i = item.index, len = item.ref.symbols.length; i < len; i++) {
+                    const symbol = item.ref.symbols[i];
+                    if (symbol && !used.has(symbol)) {
+                        used.add(symbol);
+    
+                        const gotoKernel = this.goto(kernel, symbol);
+                        const gotoClosure = this.closure(gotoKernel);
+                        if (!this.kernels.includes(gotoKernel)) {
+    
+                            this.kernels.push(gotoKernel);
+                            const lookaheadsMap = new WeakMap();
+                            for (const gotoItem of gotoClosure) {
+                                lookaheadsMap.set(gotoItem, new Set());
+                            }
+                            this.LookaheadsMMap.set(gotoKernel, lookaheadsMap);
                         }
-                        this.LookaheadsMMap.set(gotoKernel, lookaheadsMap);
+                    }
+                    if (!this.isNonterminal(symbol) || !this.nullable(symbol)) {
+                        break;
                     }
                 }
             }
@@ -373,8 +397,14 @@ export class Rules {
         const closure = this.closure(kernel);
         const newSet = new Set<Item>();
         for (const item of closure) {
-            if (item.ref.symbols[item.index] === symbol) {
-                newSet.add(this.ItemsMap.get(item.ref)![item.index + 1]);
+            for (let i = item.index, len = item.ref.symbols.length; i < len; i++) {
+                const currentSymbol = item.ref.symbols[i];
+                if (currentSymbol === symbol) {
+                    newSet.add(this.ItemsMap.get(item.ref)![i + 1]);
+                }
+                if (!this.isNonterminal(currentSymbol) || !this.nullable(currentSymbol)) {
+                    break;
+                }
             }
         }
 
@@ -400,14 +430,20 @@ export class Rules {
         const result = new Set<Item>(set);
 
         for (const item of result) {
-            const symbol = item.ref.symbols[item.index];
-            if (!this.isNonterminal(symbol)) {
-                continue;
-            }
-            const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
-            for (const single of singleSet) {
-                if (single.symbols[0] === EPSILON) continue;
-                result.add(this.ItemsMap.get(single)![0]);
+
+            for (let i = item.index, len = item.ref.symbols.length; i < len; i++) {
+                const symbol = item.ref.symbols[i];
+                if (!this.isNonterminal(symbol)) {
+                    break;
+                }
+                const singleSet = this.ProductionSingleSetMap.get(this.ProductionMap.get(symbol)!)!;
+                for (const single of singleSet) {
+                    if (single.symbols[0] === EPSILON) continue;
+                    result.add(this.ItemsMap.get(single)![0]);
+                }
+                if (!this.nullable(symbol)) {
+                    break;
+                }
             }
 
         }

@@ -44,7 +44,7 @@ Statement -> ExpressionStatement
     |= DoWhileStatement
     | BlockStatement
 
-ExpressionStatement -> Expression ;
+ExpressionStatement -> Expression
 IfStatement -> if ( Expression ) BlockStatement
     | if ( Expression ) BlockStatement else BlockStatement
     | if ( Expression ) BlockStatement else IfStatement

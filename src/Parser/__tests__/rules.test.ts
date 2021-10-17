@@ -405,7 +405,7 @@ Program -> Declarations Statements`;
         rule.printParsingTable();
         expect(rule.ActionMap.get(0)!.get('c')!).toStrictEqual([Action.SHIFT, 3]);
         expect(rule.ActionMap.get(0)!.get('d')!).toStrictEqual([Action.SHIFT, 4]);
-        expect(rule.ActionMap.get(1)!.get(END)!).toStrictEqual([Action.ACCEPT, 0]);
+        expect(rule.ActionMap.get(1)!.get(END)!).toStrictEqual([Action.ACCEPT, Action.ACCEPT]);
         expect(rule.ActionMap.get(2)!.get('c')!).toStrictEqual([Action.SHIFT, 3]);
         expect(rule.ActionMap.get(2)!.get('d')!).toStrictEqual([Action.SHIFT, 4]);
         expect(rule.ActionMap.get(3)!.get('c')!).toStrictEqual([Action.SHIFT, 3]);

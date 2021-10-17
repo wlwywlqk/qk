@@ -48,5 +48,5 @@ export enum Tag {
     STR,
     NUM,
  
-
+    END
 }

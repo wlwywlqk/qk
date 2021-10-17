@@ -15,6 +15,8 @@ export class Lexer {
 
     public static Keywords = new Map();
 
+    public finished = false;
+
 
     constructor(private readonly source = '') {
         Lexer.Keywords.set('var', new Token(Tag.VAR, 'var'));
@@ -35,6 +37,10 @@ export class Lexer {
 
     public get end() {
         return this.current >= this.source.length;
+    }
+
+    public get rest() {
+        return this.source.slice(this.current);
     }
 
     private advance(): string {
@@ -62,7 +68,8 @@ export class Lexer {
             throw this.error;
         }
         try {
-            return this.scanImpl();
+            const result = this.scanImpl();
+            return result;
         } catch (e) {
             this.error = e as LexerError;
             throw e;
