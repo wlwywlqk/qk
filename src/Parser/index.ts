@@ -5,7 +5,7 @@ import { Tag } from '../Lexer/tag';
 import { ParserError, ParserRuleError } from './error';
 
 
-const EndToken = new Token(Tag.END, END);
+const EndToken = new Token(Tag.END, END, 'end');
 
 export class Parser {
     public rules: Rules | null = null;
@@ -32,7 +32,7 @@ export class Parser {
                 const action = this.rules!.ActionMap.get(status)!.get(token.lexeme) || [Action.ERROR, Action.ERROR];
                 switch (action[0]) {
                     case Action.ACCEPT: this.accept(); token = null; break;
-                    case Action.ERROR: console.log(`[Error]: Unexpected token '${token}' at [${line}, ${col}]`); line = lexer.line; col = lexer.col; token = this.nextToken(lexer); break;
+                    case Action.ERROR: console.log(status); console.log(`[Error]: Unexpected token '${token}' at [${line}, ${col}]`); line = lexer.line; col = lexer.col; token = this.nextToken(lexer); break;
                     case Action.SHIFT: stack.push(action[1]); symbolStack.push(token.lexeme); line = lexer.line; col = lexer.col; token = this.nextToken(lexer); break;
                     case Action.REDUCE:
                         const single = this.rules!.productionSingles[action[1]];

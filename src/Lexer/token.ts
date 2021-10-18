@@ -4,18 +4,19 @@ export class Token {
     constructor(
         public readonly tag: Tag,
         public readonly lexeme: string,
+        public readonly literal: any = lexeme,
     ) { }
 
     public toString() {
-        return `${this.lexeme}`;
+        return `${this.literal}`;
     }
 }
 
 export class Num extends Token {
     constructor(
-        public readonly literal: number,
+        literal: number,
     ) {
-        super(Tag.NUM, 'num');
+        super(Tag.NUM, 'num', literal);
     }
 
     public toString() {
@@ -25,9 +26,9 @@ export class Num extends Token {
 
 export class Str extends Token {
     constructor(
-        public readonly literal: string,
+        public literal: string,
     ) {
-        super(Tag.STR, 'str');
+        super(Tag.STR, 'str', literal);
     }
 
     public toString() {
@@ -37,8 +38,8 @@ export class Str extends Token {
 
 export class Id extends Token {
     constructor(
-        public readonly literal: string
+        public literal: string
     ) {
-        super(Tag.ID, 'id')
+        super(Tag.ID, 'id', literal);
     }
 }

@@ -23,7 +23,7 @@ while (123) {
 
     do {
         var aa = 1123
-    } while (123)
+    } while 123 (123)
     a = 123
 
     id + id11 + id1 * id2 / !-(id3)
@@ -34,7 +34,7 @@ while (123) {
     if (aaa) {
         bbb == aaa
     }
-    {{{{{{{{{{{}}}}}}}}}}}
+    {{{{{{{{{{{}}}}}}}}}}
 }
 `);
 const parser = new Parser(rules);
