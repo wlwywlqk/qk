@@ -1,6 +1,6 @@
 import { Rules, Action, END } from './rules';
 import { Lexer } from '../Lexer';
-import { Token, Str, Num } from '../Lexer/token';
+import { Token } from '../Lexer/token';
 import { Tag } from '../Lexer/tag';
 import { ParserError, ParserRuleError } from './error';
 
@@ -25,14 +25,15 @@ export class Parser {
         try {
             const stack = [0];
             const symbolStack = [];
+            let { line, col } = lexer;
             let token = this.nextToken(lexer);
             while (token) {
                 const status = stack[stack.length - 1];
                 const action = this.rules!.ActionMap.get(status)!.get(token.lexeme) || [Action.ERROR, Action.ERROR];
                 switch (action[0]) {
-                    case Action.ACCEPT: this.accept(); token = this.nextToken(lexer); break;
-                    case Action.ERROR: console.log('[error]:' + token); token = this.nextToken(lexer); break;
-                    case Action.SHIFT: stack.push(action[1]); symbolStack.push(token.lexeme); token = this.nextToken(lexer); break;
+                    case Action.ACCEPT: this.accept(); token = null; break;
+                    case Action.ERROR: console.log(`[Error]: Unexpected token '${token}' at [${line}, ${col}]`); line = lexer.line; col = lexer.col; token = this.nextToken(lexer); break;
+                    case Action.SHIFT: stack.push(action[1]); symbolStack.push(token.lexeme); line = lexer.line; col = lexer.col; token = this.nextToken(lexer); break;
                     case Action.REDUCE:
                         const single = this.rules!.productionSingles[action[1]];
                         for (let i = 0, len = single.symbols.length; i < len; i++) {
@@ -46,7 +47,7 @@ export class Parser {
                         stack.push(this.rules!.GotoMap.get(head)!.get(single.production!.left)!);
                         symbolStack.push(single.production!.left);
                 }
-                console.log(`${symbolStack.join(' ')}                         ${stack.join(' ')}`)
+                console.log(`${symbolStack.join(' ')}`)
             }
         } catch (e) {
             this.error = e as ParserError;
@@ -67,7 +68,7 @@ export class Parser {
     }
 
     private accept() {
-        console.log('[accept]');
+        console.log('[Accept]');
     }
 
     private errorRecovery() {

@@ -1,10 +1,11 @@
-Program ->  Declarations Statements        # console.log(111); 
+Program ->  Declarations Statements        # console.log('accept'); 
 Declarations -> Declarations Declaration
     | ε
 Declaration -> Type Declarator
 Type -> var
 Declarator -> id
     | id = Expression
+
 Expression -> AssignExpression
     | BoolExpression
     | EqualityExpression
@@ -17,7 +18,6 @@ Expression -> AssignExpression
     | str
     | true
     | false
-ParenthesisExpression -> ( Expression )
 AssignExpression -> id = Expression
 BoolExpression -> Expression || Expression
     | Expression && Expression
@@ -34,7 +34,7 @@ ArithExpression -> Expression + Expression
     |= Expression / Expression
 UnaryExpression -> ! Expression    %right # test
     |= - Expression       %right
-
+ParenthesisExpression -> ( Expression )
 
 Statements -> Statements Statement
     | ε

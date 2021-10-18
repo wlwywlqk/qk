@@ -8,7 +8,12 @@ import { Lexer } from './Lexer';
 
 const rules = fs.readFileSync(path.resolve(__dirname, './Parser/rules.txt')).toString();
 
-const lexer = new Lexer(`if (true) { var a = 1 } else if (1) {}
+const lexer = new Lexer(`
+if (true) {
+    var a = 1
+} else if (1) {
+
+}
 while (123) {
     if (1) {
         while (1) {
@@ -20,6 +25,16 @@ while (123) {
         var aa = 1123
     } while (123)
     a = 123
+
+    id + id11 + id1 * id2 / !-(id3)
+}
+
+{
+    var aaa = bbb
+    if (aaa) {
+        bbb == aaa
+    }
+    {{{{{{{{{{{}}}}}}}}}}}
 }
 `);
 const parser = new Parser(rules);

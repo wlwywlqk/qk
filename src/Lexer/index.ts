@@ -17,7 +17,6 @@ export class Lexer {
 
     public finished = false;
 
-
     constructor(private readonly source = '') {
         Lexer.Keywords.set('var', new Token(Tag.VAR, 'var'));
         Lexer.Keywords.set('fun', new Token(Tag.FUN, 'fun'));
