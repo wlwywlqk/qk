@@ -27,19 +27,14 @@ export class Parser {
             const symbolStack = [];
             let token = this.nextToken(lexer);
             while (token) {
-                if (token === EndToken) debugger
-                console.log(token)
-                let lexerRest = lexer.rest;
                 const status = stack[stack.length - 1];
                 const action = this.rules!.ActionMap.get(status)!.get(token.lexeme) || [Action.ERROR, Action.ERROR];
                 switch (action[0]) {
                     case Action.ACCEPT: this.accept(); token = this.nextToken(lexer); break;
-                    case Action.ERROR: token = this.nextToken(lexer); break;
+                    case Action.ERROR: console.log('[error]:' + token); token = this.nextToken(lexer); break;
                     case Action.SHIFT: stack.push(action[1]); symbolStack.push(token.lexeme); token = this.nextToken(lexer); break;
                     case Action.REDUCE:
                         const single = this.rules!.productionSingles[action[1]];
-                        console.log(`${single.production!.left} -> ${single}`)
-                        let i = 1;
                         for (let i = 0, len = single.symbols.length; i < len; i++) {
                             if (symbolStack[symbolStack.length - 1] === single.symbols[single.symbols.length - i - 1]) {
                                 symbolStack.pop();
@@ -50,11 +45,8 @@ export class Parser {
                         const head = stack[stack.length - 1];
                         stack.push(this.rules!.GotoMap.get(head)!.get(single.production!.left)!);
                         symbolStack.push(single.production!.left);
-                        lexerRest = token.lexeme + lexerRest;
                 }
-
-                console.log(`${(stack + '').padEnd(20)}    ${symbolStack.join(' ').padEnd(50)}     ${lexerRest.padStart(30)}`)
-
+                console.log(`${symbolStack.join(' ')}                         ${stack.join(' ')}`)
             }
         } catch (e) {
             this.error = e as ParserError;
@@ -66,15 +58,16 @@ export class Parser {
         if (lexer.finished) {
             return null;
         }
-        if (lexer.end) {
+        const result = lexer.scan();
+        if (result === null) {
             lexer.finished = true;
             return EndToken;
         }
-        return lexer.scan();
+        return result;
     }
 
     private accept() {
-        console.log('accept')
+        console.log('[accept]');
     }
 
     private errorRecovery() {

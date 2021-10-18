@@ -1,7 +1,7 @@
 Program ->  Declarations Statements        # console.log(111); 
 Declarations -> Declarations Declaration
     | ε
-Declaration -> Type Declarator ;
+Declaration -> Type Declarator
 Type -> var
 Declarator -> id
     | id = Expression
