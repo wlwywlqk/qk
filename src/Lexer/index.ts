@@ -1,4 +1,4 @@
-import { Token, Num, Str } from './token';
+import { Token, Num, Str, Id } from './token';
 import { Tag } from './tag';
 import { LexerError } from './error';
 
@@ -127,7 +127,7 @@ export class Lexer {
                     }
                     if (this.match('"')) {
                         const lexeme = this.source.slice(this.start, this.current);
-                        return new Str(lexeme, lexeme.slice(1, -1));
+                        return new Str(lexeme.slice(1, -1));
                     }
                     throw new LexerError('Invalid token', this.line, this.col);
                 case '/':
@@ -189,7 +189,7 @@ export class Lexer {
                             throw new LexerError('Unexpected number.', this.line, this.col);
                         }
                         const lexeme = this.source.slice(this.start, this.current)
-                        return new Num(lexeme, Number(lexeme));
+                        return new Num(Number(lexeme));
                     } else if (isLetter(c)) {
                         this.start = this.current - 1;
                         while (isLetter(this.peek()) || isNumber(this.peek())) {
@@ -199,7 +199,7 @@ export class Lexer {
                         if (Lexer.Keywords.has(lexeme)) {
                             return Lexer.Keywords.get(lexeme);
                         } else {
-                            return new Token(Tag.ID, lexeme);
+                            return new Id(lexeme);
                         }
                     }
             }

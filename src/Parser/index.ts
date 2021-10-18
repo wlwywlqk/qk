@@ -28,6 +28,7 @@ export class Parser {
             let token = this.nextToken(lexer);
             while (token) {
                 if (token === EndToken) debugger
+                console.log(token)
                 let lexerRest = lexer.rest;
                 const status = stack[stack.length - 1];
                 const action = this.rules!.ActionMap.get(status)!.get(token.lexeme) || [Action.ERROR, Action.ERROR];
