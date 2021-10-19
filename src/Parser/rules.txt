@@ -32,11 +32,11 @@ ArithExpression -> Expression + Expression
     |= Expression - Expression
     | Expression * Expression
     |= Expression / Expression
-UnaryExpression -> ! Expression    %right # test
-    |= - Expression       %right
+UnaryExpression -> ! Expression    %right # new UnaryExpression('!', $[0]);
+    |= - Expression       %right # new UnaryExpression('-', $[0]);
 ParenthesisExpression -> ( Expression )
 
-Statements -> Statements Statement
+Statements -> Statements Statement   # if ($1) $1.push($2) else 
     | ε
 Statement -> ExpressionStatement
     | IfStatement

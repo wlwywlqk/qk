@@ -145,7 +145,7 @@ export class Rules {
         let str = '';
         let index = 0;
         for (const kernel of this.kernels) {
-            str += `-----------------${index++}-----------------\n`;
+            str += `\n-----------------${index++}-----------------\n`;
             const lookaheadsMap = this.LookaheadsMMap.get(kernel)!;
             const closure = this.closure(kernel);
             for (const item of closure) {
