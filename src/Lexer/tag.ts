@@ -26,23 +26,6 @@ export enum Tag {
     GREATER_EQUAL,
     LESS,
     LESS_EQUAL,
-    
-
-    VAR,
-    FUN,
-    RETURN,
-    THIS,
-    FALSE,
-    TRUE,
-    IF,
-    ELSE,
-    DO,
-    WHILE,
-    FOR,
-    CLASS,
-    EXTENDS,
-    NULL,
-  
 
     ID,
     STR,

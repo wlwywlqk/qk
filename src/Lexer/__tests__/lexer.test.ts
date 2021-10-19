@@ -96,13 +96,13 @@ describe('lexer', () => {
         const lexer = new Lexer(`var a1 = 1;
         fun foo() {}
         `);
-        expect(lexer.scan()).toEqual(new Token(Tag.VAR, 'var'));
+        expect(lexer.scan()).toEqual(new Token(Tag.ID, 'var'));
         expect(lexer.scan()).toEqual(new Id('a1'));
         expect(lexer.scan()).toEqual(new Token(Tag.EQUAL, '='));
         expect(lexer.scan()).toEqual(new Num(1));
         expect(lexer.scan()).toEqual(new Token(Tag.SEMICOLON, ';'));
 
-        expect(lexer.scan()).toEqual(new Token(Tag.FUN, 'fun'));
+        expect(lexer.scan()).toEqual(new Token(Tag.ID, 'fun'));
         expect(lexer.scan()).toEqual(new Id('foo'));
         expect(lexer.scan()).toEqual(new Token(Tag.LEFT_PAREN, '('));
         expect(lexer.scan()).toEqual(new Token(Tag.RIGHT_PAREN, ')'));

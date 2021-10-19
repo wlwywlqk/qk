@@ -18,20 +18,20 @@ export class Lexer {
     public finished = false;
 
     constructor(private readonly source = '') {
-        Lexer.Keywords.set('var', new Token(Tag.VAR, 'var'));
-        Lexer.Keywords.set('fun', new Token(Tag.FUN, 'fun'));
-        Lexer.Keywords.set('if', new Token(Tag.IF, 'if'));
-        Lexer.Keywords.set('else', new Token(Tag.ELSE, 'else'));
-        Lexer.Keywords.set('do', new Token(Tag.DO, 'do'));
-        Lexer.Keywords.set('while', new Token(Tag.WHILE, 'while'));
-        Lexer.Keywords.set('for', new Token(Tag.FOR, 'for'));
-        Lexer.Keywords.set('class', new Token(Tag.CLASS, 'class'));
-        Lexer.Keywords.set('extends', new Token(Tag.EXTENDS, 'extends'));
-        Lexer.Keywords.set('true', new Token(Tag.TRUE, 'true'));
-        Lexer.Keywords.set('false', new Token(Tag.FALSE, 'false'));
-        Lexer.Keywords.set('this', new Token(Tag.THIS, 'this'));
-        Lexer.Keywords.set('return', new Token(Tag.RETURN, 'return'));
-        Lexer.Keywords.set('null', new Token(Tag.NULL, 'null'));
+        Lexer.Keywords.set('var', new Token(Tag.ID, 'var'));
+        Lexer.Keywords.set('fun', new Token(Tag.ID, 'fun'));
+        Lexer.Keywords.set('if', new Token(Tag.ID, 'if'));
+        Lexer.Keywords.set('else', new Token(Tag.ID, 'else'));
+        Lexer.Keywords.set('do', new Token(Tag.ID, 'do'));
+        Lexer.Keywords.set('while', new Token(Tag.ID, 'while'));
+        Lexer.Keywords.set('for', new Token(Tag.ID, 'for'));
+        Lexer.Keywords.set('class', new Token(Tag.ID, 'class'));
+        Lexer.Keywords.set('extends', new Token(Tag.ID, 'extends'));
+        Lexer.Keywords.set('true', new Token(Tag.ID, 'true'));
+        Lexer.Keywords.set('false', new Token(Tag.ID, 'false'));
+        Lexer.Keywords.set('this', new Token(Tag.ID, 'this'));
+        Lexer.Keywords.set('return', new Token(Tag.ID, 'return'));
+        Lexer.Keywords.set('null', new Token(Tag.ID, 'null'));
     }
 
     public get end() {
