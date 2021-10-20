@@ -1,10 +1,4 @@
-Program ->  Declarations Statements        # console.log('accept'); 
-Declarations -> Declarations Declaration
-    | ε
-Declaration -> Type Declarator
-Type -> var
-Declarator -> id
-    | id = Expression
+Program -> Statements        # console.log('accept'); 
 
 Expression -> AssignExpression
     | BoolExpression
@@ -32,22 +26,26 @@ ArithExpression -> Expression + Expression
     |= Expression - Expression
     | Expression * Expression
     |= Expression / Expression
-UnaryExpression -> ! Expression    %right # new UnaryExpression('!', $[0]);
-    |= - Expression       %right # new UnaryExpression('-', $[0]);
+UnaryExpression -> ! Expression    %right #
+    |= - Expression       %right #
 ParenthesisExpression -> ( Expression )
 
 Statements -> Statements Statement   # if ($1) $1.push($2) else 
     | ε
-Statement -> ExpressionStatement
+Statement -> DeclarationStatement
+    | ExpressionStatement
     | IfStatement
     | WhileStatement
     |= DoWhileStatement
     | BlockStatement
 
+DeclarationStatement -> Type id
+    | Type id = Expression
+Type -> var
 ExpressionStatement -> Expression
 IfStatement -> if ( Expression ) BlockStatement
     | if ( Expression ) BlockStatement else BlockStatement
     | if ( Expression ) BlockStatement else IfStatement
 WhileStatement -> while ( Expression ) BlockStatement
 DoWhileStatement -> do BlockStatement while ( Expression )
-BlockStatement -> { Declarations Statements }
+BlockStatement -> { Statements }

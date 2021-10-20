@@ -27,6 +27,7 @@ export class Parser {
                 switch (action[0]) {
                     case Action.ACCEPT:
                         token = null;
+                        console.log('Accept!');
                         break;
                     case Action.ERROR:
                         errors.push(new ParserError(`Unexpected token '${token}'`, line, col));
