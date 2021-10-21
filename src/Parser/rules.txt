@@ -36,7 +36,7 @@ Statement -> DeclarationStatement
     | ExpressionStatement
     | IfStatement
     | WhileStatement
-    |= DoWhileStatement
+    | DoWhileStatement
     | BlockStatement
 
 DeclarationStatement -> Type id

@@ -169,3 +169,25 @@ export class DoWhileStatement implements Acceptor {
         return visitor.visitDoWhileStatement(this);
     }
 }
+
+
+export const DefinitionMap = new Map<string, any>([
+    ['Program', Program],
+    ['Expression', Expression],
+    ['AssignExpression', AssignExpression],
+    ['BoolExpression', BoolExpression],
+    ['EqualityExpression', EqualityExpression],
+    ['RelExpression', RelExpression],
+    ['ArithExpression', ArithExpression],
+    ['UnaryExpression', UnaryExpression],
+    ['ParenthesisExpression', ParenthesisExpression],
+    ['Statements', Statements],
+    ['Statement', Statement],
+    ['DeclarationStatement', DeclarationStatement],
+    ['ExpressionStatement', ExpressionStatement],
+    ['IfStatement', IfStatement],
+    ['WhileStatement', WhileStatement],
+    ['DoWhileStatement', DoWhileStatement],
+    ['BlockStatement', BlockStatement],
+    ['Type', Type],
+]);

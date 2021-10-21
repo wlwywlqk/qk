@@ -1,4 +1,5 @@
 import { Rules, Action, END } from './rules';
+import { DefinitionMap } from './definition';
 import { Lexer } from '../Lexer';
 import { Token } from '../Lexer/token';
 import { Tag } from '../Lexer/tag';
