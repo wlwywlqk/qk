@@ -1,4 +1,4 @@
-import { Rules, Action, END } from './rules';
+import { Rules, Action, END, ProductionRightSingle } from './rules';
 import { DefinitionMap } from './definition';
 import { Lexer } from '../Lexer';
 import { Token } from '../Lexer/token';
@@ -15,15 +15,15 @@ export class Parser {
         // this.rules.printParsingTable();
     }
 
-    public run(lexer: Lexer) {
+    public run(lexer: Lexer): [any, ParserError[]] {
         try {
-            const stack = [0];
-            const symbolStack = [];
+            const statusStack = [0];
+            const stack: any[] = [];
             let { line, col } = lexer;
             let token = this.nextToken(lexer);
             const errors = [];
             while (token) {
-                const status = stack[stack.length - 1];
+                const status = statusStack[statusStack.length - 1];
                 const action = this.rules!.ActionMap.get(status)!.get(token.lexeme) || [Action.ERROR, Action.ERROR];
                 switch (action[0]) {
                     case Action.ACCEPT:
@@ -31,35 +31,42 @@ export class Parser {
                         console.log('Accept!');
                         break;
                     case Action.ERROR:
-                        errors.push(new ParserError(`Unexpected token '${token}'`, line, col));
+                        errors.push(new ParserError(`Unexpected token '${token.literal}'`, line, col));
                         line = lexer.line;
                         col = lexer.col;
                         token = this.nextToken(lexer);
                         break;
                     case Action.SHIFT:
-                        stack.push(action[1]);
-                        symbolStack.push(token.lexeme);
+                        statusStack.push(action[1]);
+                        stack.push(token);
                         line = lexer.line;
                         col = lexer.col;
                         token = this.nextToken(lexer);
                         break;
                     case Action.REDUCE:
                         const single = this.rules!.productionSingles[action[1]];
+                        const params = [];
                         for (let i = 0, len = single.symbols.length; i < len; i++) {
-                            if (symbolStack[symbolStack.length - 1] === single.symbols[single.symbols.length - i - 1]) {
-                                symbolStack.pop();
-                                stack.pop();
+                            if (`${stack[stack.length - 1]}` === single.symbols[single.symbols.length - i - 1]) {
+                                const pop = stack.pop();
+                                params.unshift(pop instanceof Token ? pop.literal : pop);
+                                statusStack.pop();
+                            } else {
+                                params.unshift(null);
                             }
                         }
 
-                        const head = stack[stack.length - 1];
-                        stack.push(this.rules!.GotoMap.get(head)!.get(single.production!.left)!);
-                        symbolStack.push(single.production!.left);
-                        console.log(`${single.production?.left} -> ${single.symbols.join(' ')}\n`);
+                        const head = statusStack[statusStack.length - 1];
+                        statusStack.push(this.rules!.GotoMap.get(head)!.get(single.production!.left)!);
+                        
+                        const node = new (DefinitionMap.get(single.production!.left)!)();
+                        stack.push(node);
+                        this.evalCode(single, node, params);
+                        // console.log(`${single.production?.left} -> ${single.symbols.join(' ')}\n`);
                 }
-                console.log(`${symbolStack.join(' ')}`)
+                console.log(`${stack.join(' ')}`);
             }
-            console.log(errors);
+            return [stack[0], errors];
         } catch (e) {
             throw e;
         }
@@ -75,5 +82,13 @@ export class Parser {
             return EndToken;
         }
         return result;
+    }
+
+    private evalCode(single: ProductionRightSingle, $: any, $$: any[]) {
+        try {
+            eval(single.code);
+        } catch(e) {
+            throw new ParserRuleError(`Unexpected error at ${single} code.`);
+        }
     }
 }

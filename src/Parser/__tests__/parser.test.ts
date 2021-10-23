@@ -10,15 +10,8 @@ const rules = fs.readFileSync(path.resolve(__dirname, '../rules.txt')).toString(
 
 describe('parser', () => {
     test('rules', () => {
-        const rules = `
-            E -> E + T
-                | T
-            T -> T * F
-                | F
-            F -> ( E )
-                | id
-        `;
-        const code = `id + id * id + id`;
+        
+        const code = `id1 + id2 * id3 + id4`;
 
         const parser = new Parser(rules);
         const lexer = new Lexer(code);

@@ -26,7 +26,17 @@ interface Acceptor {
     accept<T>(visitor: Visitor<T>): T;
 }
 
-export class Program implements Acceptor {
+export class Base {
+    public static toString() {
+        return this.name;
+    }
+
+    public toString() {
+        return this.constructor.name;
+    }
+}
+
+export class Program extends Base implements Acceptor {
     public statements: Statement[];
     public accept<T>(visitor: Visitor<T>): T {
         return visitor.visitProgram(this);
@@ -34,14 +44,14 @@ export class Program implements Acceptor {
 }
 
 
-export class Expression implements Acceptor {
+export class Expression extends Base implements Acceptor {
     public value: any;
     public accept<T>(visitor: Visitor<T>): T {
         return visitor.visitExpression(this);
     }
 }
 
-export class AssignExpression implements Acceptor {
+export class AssignExpression extends Base implements Acceptor {
     public left: string;
     public right: Expression;
     public accept<T>(visitor: Visitor<T>): T {
@@ -49,7 +59,7 @@ export class AssignExpression implements Acceptor {
     }
 }
 
-export class BoolExpression implements Acceptor {
+export class BoolExpression extends Base implements Acceptor {
     public left: Expression;
     public right: Expression;
     public op: string;
@@ -58,7 +68,7 @@ export class BoolExpression implements Acceptor {
     }
 }
 
-export class EqualityExpression implements Acceptor {
+export class EqualityExpression extends Base implements Acceptor {
     public left: Expression;
     public right: Expression;
     public op: string;
@@ -67,7 +77,7 @@ export class EqualityExpression implements Acceptor {
     } 
 }
 
-export class RelExpression implements Acceptor {
+export class RelExpression extends Base implements Acceptor {
     public left: Expression;
     public right: Expression;
     public op: string;
@@ -76,7 +86,7 @@ export class RelExpression implements Acceptor {
     } 
 }
 
-export class ArithExpression implements Acceptor {
+export class ArithExpression extends Base implements Acceptor {
     public left: Expression;
     public right: Expression;
     public op: string;
@@ -85,7 +95,7 @@ export class ArithExpression implements Acceptor {
     } 
 }
 
-export class UnaryExpression implements Acceptor {
+export class UnaryExpression extends Base implements Acceptor {
     public right: Expression;
     public op: string;
     public accept<T>(visitor: Visitor<T>): T {
@@ -93,7 +103,7 @@ export class UnaryExpression implements Acceptor {
     } 
 }
 
-export class ParenthesisExpression implements Acceptor {
+export class ParenthesisExpression extends Base implements Acceptor {
     public value: Expression;
     public accept<T>(visitor: Visitor<T>): T {
         return visitor.visitParenthesisExpression(this);
@@ -101,28 +111,28 @@ export class ParenthesisExpression implements Acceptor {
 }
 
 
-export class Statement implements Acceptor {
+export class Statement extends Base implements Acceptor {
     public statement: any;
     public accept<T>(visitor: Visitor<T>): T {
         return visitor.visitStatement(this);
     }
 }
 
-export class Statements implements Acceptor {
+export class Statements extends Base implements Acceptor {
     public statements: Statement[];
     public accept<T>(visitor: Visitor<T>): T {
         return visitor.visitStatements(this);
     }
 }
 
-export class Type implements Acceptor {
+export class Type extends Base implements Acceptor {
     public kind: string;
     public accept<T>(visitor: Visitor<T>): T {
         return visitor.visitType(this);
     }
 }
 
-export class DeclarationStatement implements Acceptor {
+export class DeclarationStatement extends Base implements Acceptor {
     public type: Type;
     public name: string;
     public value: Expression;
@@ -131,14 +141,14 @@ export class DeclarationStatement implements Acceptor {
     }
 }
 
-export class ExpressionStatement implements Acceptor {
+export class ExpressionStatement extends Base implements Acceptor {
     public expression: Expression;
     public accept<T>(visitor: Visitor<T>): T {
         return visitor.visitExpressionStatement(this);
     } 
 }
 
-export class IfStatement implements Acceptor {
+export class IfStatement extends Base implements Acceptor {
     public expression: Expression;
     public then: BlockStatement;
     public else: BlockStatement | IfStatement;
@@ -147,14 +157,14 @@ export class IfStatement implements Acceptor {
     } 
 }
 
-export class BlockStatement implements Acceptor {
+export class BlockStatement extends Base implements Acceptor {
     public statements: Statements;
     public accept<T>(visitor: Visitor<T>): T {
         return visitor.visitBlockStatement(this);
     } 
 }
 
-export class WhileStatement implements Acceptor {
+export class WhileStatement extends Base implements Acceptor {
     public expression: Expression;
     public statement: BlockStatement;
     public accept<T>(visitor: Visitor<T>): T {
@@ -162,7 +172,7 @@ export class WhileStatement implements Acceptor {
     } 
 }
 
-export class DoWhileStatement implements Acceptor {
+export class DoWhileStatement extends Base implements Acceptor {
     public expression: Expression;
     public statement: BlockStatement;
     public accept<T>(visitor: Visitor<T>): T {
@@ -171,7 +181,7 @@ export class DoWhileStatement implements Acceptor {
 }
 
 
-export const DefinitionMap = new Map<string, any>([
+export const DefinitionMap = new Map<string, new () => Base>([
     ['Program', Program],
     ['Expression', Expression],
     ['AssignExpression', AssignExpression],

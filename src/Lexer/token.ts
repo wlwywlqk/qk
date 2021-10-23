@@ -8,7 +8,7 @@ export class Token {
     ) { }
 
     public toString() {
-        return `${this.literal}`;
+        return `${this.lexeme}`;
     }
 }
 
@@ -19,9 +19,6 @@ export class Num extends Token {
         super(Tag.NUM, 'num', literal);
     }
 
-    public toString() {
-        return `${this.literal}`;
-    }
 }
 
 export class Str extends Token {
@@ -31,9 +28,6 @@ export class Str extends Token {
         super(Tag.STR, 'str', literal);
     }
 
-    public toString() {
-        return `${this.literal}`;
-    }
 }
 
 export class Id extends Token {
