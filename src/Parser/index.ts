@@ -15,7 +15,7 @@ export class Parser {
         // this.rules.printParsingTable();
     }
 
-    public run(lexer: Lexer): [any, ParserError[]] {
+    public run(lexer: Lexer, cb: CallableFunction | null = null): [any, ParserError[]] {
         try {
             const statusStack = [0];
             const stack: any[] = [];
@@ -28,7 +28,6 @@ export class Parser {
                 switch (action[0]) {
                     case Action.ACCEPT:
                         token = null;
-                        console.log('Accept!');
                         break;
                     case Action.ERROR:
                         errors.push(new ParserError(`Unexpected token '${token.literal}'`, line, col));
@@ -64,7 +63,10 @@ export class Parser {
                         this.evalCode(single, node, params);
                         // console.log(`${single.production?.left} -> ${single.symbols.join(' ')}\n`);
                 }
-                console.log(`${stack.join(' ')}`);
+
+                if (cb) {
+                    cb(statusStack, stack);
+                }
             }
             return [stack[0], errors];
         } catch (e) {

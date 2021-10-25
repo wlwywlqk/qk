@@ -38,7 +38,9 @@ while (123) {
 `);
 const parser = new Parser(rules);
 
-// parser.rules?.print();
-// parser.rules?.printParsingTable();
+parser.rules?.print();
+parser.rules?.printParsingTable();
 
-parser.run(lexer);
+parser.run(lexer, (statusStack: any, stack: any[]) => {
+    console.log(`${stack.join(' ')}`);
+});
