@@ -48,7 +48,7 @@ export class Parser {
                         for (let i = 0, len = single.symbols.length; i < len; i++) {
                             if (`${stack[stack.length - 1]}` === single.symbols[single.symbols.length - i - 1]) {
                                 const pop = stack.pop();
-                                params.unshift(pop instanceof Token ? pop.literal : pop);
+                                params.unshift(pop);
                                 statusStack.pop();
                             } else {
                                 params.unshift(null);
