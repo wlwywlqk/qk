@@ -19,4 +19,15 @@ describe('parser', () => {
         parser.run(lexer);
 
     });
+
+    test('rules syntax error', () => {
+        const code = `id1 + ) + id2 * -id3 + id4`;
+
+        const parser = new Parser(rules);
+        const lexer = new Lexer(code);
+
+        const [ast, errors] = parser.run(lexer);
+
+        expect(errors.length).toBe(1);
+    });
 });

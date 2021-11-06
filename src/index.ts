@@ -42,7 +42,7 @@ const parser = new Parser(rules);
 // parser.rules?.printParsingTable();
 
 const [ast, errors] = parser.run(lexer, (statusStack: any, stack: any[]) => {
-    // console.log(`${stack.join(' ')}`);
+    console.log(`${stack.join(' ')}`);
 });
 
-console.log(JSON.stringify(ast, null, 5));
+console.log(JSON.stringify(ast, null, 4));

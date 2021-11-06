@@ -28,6 +28,7 @@ ArithExpression -> Expression + Expression                   # $.left = $$[0]; $
     |= Expression / Expression                               # $.left = $$[0]; $.op = $$[1]; $.right = $$[2];
 UnaryExpression -> ! Expression    %right                    # $.op = $$[0]; $.right = $$[1];
     |= - Expression       %right                             # $.op = $$[0]; $.right = $$[1];
+    |= + Expression       %right                             # $.op = $$[0]; $.right = $$[1];
 ParenthesisExpression -> ( Expression )                      # $.value = $$[1];
 
 Statements -> Statements Statement                           # if ($$[0]) { $.statements = $$[0].statements.concat([$$[1]]); } else { $.statements = [$$[1]]; }

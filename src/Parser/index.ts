@@ -12,10 +12,9 @@ export class Parser {
     public rules: Rules | null = null;
     constructor(rules: string) {
         this.rules = new Rules(rules);
-        // this.rules.printParsingTable();
     }
 
-    public run(lexer: Lexer, cb: CallableFunction | null = null): [any, ParserError[]] {
+    public run(lexer: Lexer, cb?: (statusStack: number[], stack: any[]) => any): [any, ParserError[]] {
         try {
             const statusStack = [0];
             const stack: any[] = [];
