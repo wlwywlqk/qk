@@ -223,8 +223,8 @@ export class Rules {
     }
 
     private collectActions(): void {
-        const endSinlge = this.productions[0].right[0] as ProductionRightSingle;
-        const endItem = this.ItemsMap.get(endSinlge)![endSinlge.symbols.length];
+        const endSingle = this.productions[0].right[0] as ProductionRightSingle;
+        const endItem = this.ItemsMap.get(endSingle)![endSingle.symbols.length];
         for (let i = 0, len = this.kernels.length; i < len; i++) {
             const kernel = this.kernels[i];
             const closure = this.closure(kernel);
