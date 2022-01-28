@@ -203,6 +203,6 @@ export class Lexer {
                     }
             }
         }
-        return null
+        return null;
     }
 }
